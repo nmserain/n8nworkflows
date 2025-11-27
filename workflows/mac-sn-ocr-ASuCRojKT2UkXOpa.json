@@ -1,0 +1,768 @@
+{
+  "name": "MAC SN OCR",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1wShjd64G8jEsg3PWV_nSeF9x4lE48ud_",
+            "mode": "list",
+            "cachedResultName": "Photos MAC SN"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1376,
+        1064
+      ],
+      "id": "0635a4ee-4dbf-4391-ab0c-a811973f47d1",
+      "name": "📁 Get Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1152,
+        1064
+      ],
+      "id": "7287da7c-18cd-4f66-bb2f-c2a1a54b6d01",
+      "name": "⬇️ Download Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list"
+        },
+        "text": "Extract the following information from this photo:\n- The phone model (e.g. \"SIP-T34W\", \"SIP-T54W\")\n- All Serial Numbers (SN)\n- All MAC addresses\n\nReturn the result as a pure JSON array of objects.\n⚠️ Do not add any text, comments, explanations, or markdown formatting.\n⚠️ Only return valid JSON.\n\nExample format:\n[\n  {\n    \"filename\": \"{{ $json.name }}\",\n    \"model\": \"SIP-T34W\",\n    \"serial\": \"201037G090016613\",\n    \"mac\": \"44DBD27E72B7\"\n  }\n]",
+        "inputType": "base64",
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -928,
+        1064
+      ],
+      "id": "8ea21603-35c8-466c-941f-0c988525b1ca",
+      "name": "🔍 OCR Analysis",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse OCR JSON results\nconst output = [];\nfor (const item of items) {\n  try {\n    const parsed = JSON.parse(item.json.content);\n    const rows = Array.isArray(parsed) ? parsed : [parsed];\n\n    for (const row of rows) {\n      output.push({ json: row });\n    }\n  } catch (e) {\n    output.push({ json: { error: e.message, raw: item.json.content } });\n  }\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        1064
+      ],
+      "id": "6a31cb8f-2b58-4409-bd24-240d09d2dfe0",
+      "name": "📊 Parse OCR"
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "fileName": "={{ $json.filename }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        1064
+      ],
+      "id": "d285d19f-3e7d-4ee7-b98a-562eb42b0a47",
+      "name": "💾 Save Final CSV"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        96,
+        1064
+      ],
+      "id": "76154c2f-310c-4d8e-b561-804a9009c83b",
+      "name": "✅ Success"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        1392
+      ],
+      "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Mission: Create a valid 3CX import CSV\n\n## Data Available:\n- MAC phones (JSON array):\n\n- DTX users (JSON array):\n\n- Example CSV format:\n\n## Rules:\n- CSV must have exactly 54 columns, matching the headers in the example.\n- Each row = one DTX user.\n- Assign phones to users:\n  - DTX model \"T54\" → SIP-T54W phone (unique MAC).\n  - DTX model \"T57\" → SIP-T57W phone (unique MAC).\n  - DTX model \"T34\" → SIP-T34W phone (unique MAC).\n- No MAC can be used twice.\n- Default values: (fill with example if missing)\n  - Role = `<role name=\"users\" />`\n  - Department = `DEFAULT`\n  - VMEnable = `1`\n  - VMPIN = random 6-digit number\n  - etc. (follow example CSV)\n\n## Output Requirements:\n- Only return raw CSV text (no markdown, no explanations).\n- Each row must contain exactly 54 values.\n- If data is missing, insert an empty string \"\" to preserve 54 columns.\n",
+        "options": {
+          "systemMessage": "You are an expert in 3CX phone system configuration.\nYour task is to generate a perfectly valid 3CX import CSV file.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        960
+      ],
+      "id": "eeab17d9-d6ec-4566-afc7-b0dbe29a0567",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -472,
+        1184
+      ],
+      "id": "150c98b6-5faa-47f8-9b6e-26d916d42e6d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "The Agent can call this tool on its own output. If invalid, it regenerates.",
+        "jsCode": "function validateCSV(csvText) {\n  const lines = csvText.trim().split('\\n');\n  const expectedCols = 54;\n  for (let i = 0; i < lines.length; i++) {\n    const cols = lines[i].split(',');\n    if (cols.length !== expectedCols) {\n      return { valid: false, row: i+1, cols: cols.length };\n    }\n  }\n  return { valid: true, rows: lines.length };\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -344,
+        1184
+      ],
+      "id": "b5637114-40f3-4dfb-bf89-9a6a746cb120",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "includeEmptyCells": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        1488
+      ],
+      "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
+      "name": "Extract dtx",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        1488
+      ],
+      "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "limit": 1,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1svPiSEnDh_FclOa8prgZciYDiROMg0hP",
+            "mode": "list",
+            "cachedResultName": "dtx to ymcs ",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1svPiSEnDh_FclOa8prgZciYDiROMg0hP"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1152,
+        1392
+      ],
+      "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
+      "name": "📋 Get DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -928,
+        1392
+      ],
+      "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
+      "name": "⬇️ Download DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire le JSON de la réponse de l'IA\nconst response = $input.first().json;\nconst content = response.message.content;\nconst data = JSON.parse(content);\n\n// Préparer les données au format attendu par Convert to File\nconst devices = data.devices.map(device => ({\n  '*MAC': device.MAC,\n  '*Machine ID(Serial Number)': device.MachineID,\n  'Model': device.Model,\n  'Device Name': device.DeviceName,\n  'Site': device.Site,\n  'Unique URL': device.UniqueURL,\n  'User Name': device.UserName,\n  'Password': device.Password,\n  'Description': device.Description,\n  'Account Type': device.AccountType,\n  'Account Info': device.AccountInfo,\n  'Account Line': device.AccountLine\n}));\n\n// Retourner les données formatées\nreturn devices.map(device => ({ json: device }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        1392
+      ],
+      "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
+      "name": "YMCS Format"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "compression": true,
+          "fileName": "=import_ymcs.xlsx",
+          "headerRow": true,
+          "sheetName": "devices_template"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        1392
+      ],
+      "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
+      "name": "Convert File & Download"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupération brute de la réponse IA\nconst response = $input.first().json;\nconst csvContent = response.message.content.trim();\n\n// Fonction de parsing CSV sans module externe (gère les guillemets)\nfunction parseCSV(data) {\n  const rows = [];\n  let current = '';\n  let insideQuotes = false;\n  const lines = data.split('\\n');\n  const headers = lines[0].split(',');\n\n  for (let i = 1; i < lines.length; i++) {\n    const row = [];\n    current = '';\n    insideQuotes = false;\n\n    for (let charIndex = 0; charIndex < lines[i].length; charIndex++) {\n      const char = lines[i][charIndex];\n      const nextChar = lines[i][charIndex + 1];\n\n      if (char === '\"' && insideQuotes && nextChar === '\"') {\n        current += '\"'; // gérer double guillemets \"\"\n        charIndex++;\n      } else if (char === '\"') {\n        insideQuotes = !insideQuotes;\n      } else if (char === ',' && !insideQuotes) {\n        row.push(current.trim());\n        current = '';\n      } else {\n        current += char;\n      }\n    }\n    row.push(current.trim());\n    rows.push(row);\n  }\n\n  return rows.map(cols => {\n    const obj = {};\n    headers.forEach((header, idx) => {\n      obj[header.trim()] = cols[idx] || '';\n    });\n    return obj;\n  });\n}\n\nconst parsed = parseCSV(csvContent);\n\n// Retourner chaque ligne formatée\nreturn parsed.map(row => ({ json: row }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        1584
+      ],
+      "id": "f487bf56-c0f1-42a0-888b-4105d6d0abc1",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "fileName": "=3cx_import.csv",
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        1584
+      ],
+      "id": "c115e4b7-ef14-4ee3-8e99-6c0c83ce22e0",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n  \n\n# Prompt de conversion DTX → CSV 3CX V20\n\n## Instructions\nConvertis le fichier Excel DTX en CSV d'import 3CX V20 en suivant ces règles strictes :\n\n### 1. EXTRACTION DES DONNÉES\n- Feuille : \"DT Recap\"\n- En-têtes : ligne 7 ou 8 (chercher \"Extension\", \"Nom\", \"MAC\")\n- Colonnes DTX : Lieu | Nom | Prénom | Extension | SDA | Affichage sortant | GDM | Modèle | Casque | Softphone | Email | MAC | SN | SBC | IP\n\n### 2. IDENTIFICATION DU ROUTEUR\n- **Si colonne SBC contient \"SBC\" + numéro** (ex: \"SBC 1\") → C'est un téléphone routeur\n  - Le champ Router = son propre MAC\n- **Si colonne SBC contient juste un numéro** (ex: \"1\", \"2\") → Téléphone standard\n  - Le champ Router = MAC du routeur SBC correspondant\n- **Cas spécial** : Si pas de mention SBC, le premier téléphone (souvent ACCUEIL) est le routeur\n\n### 3. RÈGLES DE CONVERSION\n\n**Champs obligatoires :**\nNumber: [Extension]\nFirstName: [Nom]\nLastName: [Prénom]\nEmailAddress :\n- Utiliser l'email original du fichier\n- Si l'email contient une virgule, remplacer UNIQUEMENT les virgules par des points (ex: jean,dupont@mairie,fr → jean.dupont@mairie.fr)\n- Ne jamais générer d'email si le champ est vide\n- Ne jamais modifier d'autres caractères que les virgules\nOutboundCallerID: [Affichage sortant sans espaces]\nDID: [Ajouter préfixe 596 au SDA - ex: 707630 → 596707630]\nRole: \"<role name=\"\"users\"\" />\"\nDepartment: DEFAULT\nMAC: [MAC du téléphone]\nRouter: [MAC du routeur SBC]\nModel: Mapper SIP-T54W→Yealink T54W, SIP-T34W→Yealink T34W, SIP-T31G→Yealink T33G\nTemplate: yealinkT4x.ph.xml\nLanguage: French\nWebMeetingFriendlyName: [nom+prenom en minuscules sans espaces/accents, max 15 chars + 2-4 chiffres aléatoires]\n\n**Paramètres fixes :**\nMobileNumber: \nClickToCallAuth: \nWMApprove: \nRingtone: Ring1.wav\nQRingtone: Ring6.wav\nVMEnable: 1\nVMLanguage: 0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\nVMPlayMsgDateTime: 0\nVMPIN: [4 chiffres aléatoires]\nVMEmailOptions: 1\nVMNoPin: 1\nVMPlayCallerID: 0\nRecordCalls: 0\nRecordExternal: \nRecordCanSee: 0\nRecordCanDelete: 0\nRecordStartStop: \nRecordNotify: 0\nDisabled: 0\nHideFWrules: 0\nDisableExternalCalls: 0\nHideInPhonebook: 0\nCallScreening: 0\nPinProtected: \nPinTimeout: 0\nTranscription: \nAllowLanOnly: 1\nSIPID: \nDeliverAudio: 0\nHotDesk: \nSRTPMode: 0\nEmailMissedCalls: 0\nMS365SignInDisabled: \nMS365CalendarDisabled: \nMS365ContactsDisabled: \nMS365TeamsDisabled: \nGoogleSignInDisabled: \nGoogleContactsDisabled: \nGoogleCalendarDisabled: \nBLF: \"<PhoneDevice><BLFS/></PhoneDevice>\"\n\n### 4. FORMAT FINAL\n- CSV avec toutes les colonnes dans l'ordre exact\n- Séparateur : virgule\n- Encodage : UTF-8\n- Première ligne : en-têtes\n- Toute valeur contenant des virgules ou < > doit être entre guillemets\n\n### 5. EXEMPLE DE SORTIE (juste pour référence, ne pas inclure)\nNumber,FirstName,LastName,EmailAddress,...\n\n### 6. CONTRAINTES FINALES STRICTES\n- Tu DOIS générer **EXACTEMENT le nombre de lignes correspondant au fichier source**, sans omission.\n- Si une des lignes dépasse, **tu réécris TOUT** plutôt que de tronquer.\n- **Interdit** : texte explicatif, \"Voici le CSV\", ```csv, ``` ou tout autre balisage.\n- La réponse DOIT **commencer directement par la ligne d'en-tête CSV**.\n- **Si une adresse e-mail contient une virgule, ne remplacer QUE la virgule par un point.**\n- **À la fin du fichier**, ajoute une ligne de contrôle au format :\n`# TOTAL_LIGNES=[nombre réel de lignes générées hors en-tête]`\n- Tu DOIS vérifier en interne que ce nombre correspond AVANT d'envoyer.\n- **Aucune coupure autorisée. Priorité : complétude totale du CSV.**\n\nIMPORTANT — NE RETOURNE STRICTEMENT RIEN D'AUTRE QUE LE CONTENU CSV + la ligne TOTAL_LIGNES\n",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 8000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -256,
+        1584
+      ],
+      "id": "0227348d-60e4-4429-acbe-6d590162be05",
+      "name": "CSV 3CX",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n  \n\nPrompt Compact : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\nSite (Col 4) : mtq-3cx-{nomclient}-1\n   - Ex: mtq-3cx-eem-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\nPour chaque ligne :\n   - Nettoyer MAC (sans tirets)\n   - Corriger Modèle (appliquer la règle de substitution/standardisation)\n   - Créer Device Name selon pattern\n   - Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\nDTX: Extension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\nYMCS Ligne 1 (données): 44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\n---\n\nDTX: Extension=2201 | Nom=SITE L | Prénom= | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=SIP-W70+W56H\nYMCS Ligne 1 (données): 305EC03F13 | 801081E011217378 | W70B | 2201 - SITE L | mtq-3cx-eem-1 | | | | | | |\nValidation\n✅ MAC 12 caractères sans tirets\n\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n\n✅ Device Name = Extension - Nom\n\n✅ Champs obligatoires remplis\n\n✅ Format Excel .xlsx correct\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format   :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"mtq-3cx-eem-1\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -256,
+        1392
+      ],
+      "id": "98f5923f-e4af-4fd3-83a6-1bf4971d5b50",
+      "name": "XLSX YMCS",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c3e0bfb4-f260-48bb-87d3-118d49ad26da",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        1584
+      ],
+      "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
+      "name": "Webhook",
+      "webhookId": "c3e0bfb4-f260-48bb-87d3-118d49ad26da"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        976,
+        1488
+      ],
+      "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        544,
+        1488
+      ],
+      "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Préparer la réponse JSON avec les 2 fichiers en base64\nconst csv_3cx = items.find(item => item.binary?.data?.fileName?.includes('3cx'));\nconst xlsx_ymcs = items.find(item => item.binary?.data?.fileName?.includes('ymcs'));\n\nreturn [{\n  json: {\n    success: true,\n    files: {\n      csv_3cx: {\n        filename: csv_3cx?.binary?.data?.fileName || '3cx_import.csv',\n        data: csv_3cx?.binary?.data?.data?.toString('base64') || ''\n      },\n      xlsx_ymcs: {\n        filename: xlsx_ymcs?.binary?.data?.fileName || 'import_ymcs.xlsx',\n        data: xlsx_ymcs?.binary?.data?.data?.toString('base64') || ''\n      }\n    },\n    message: 'Files processed successfully',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        1488
+      ],
+      "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
+      "name": "Code1"
+    }
+  ],
+  "pinData": {
+    "📊 Parse OCR": [
+      {
+        "json": {
+          "filename": "image1",
+          "model": "SIP-T34W",
+          "serial": "201037G090017561",
+          "mac": "44DBD27E6509"
+        }
+      },
+      {
+        "json": {
+          "filename": "image1",
+          "model": "SIP-T34W",
+          "serial": "201037G090017101",
+          "mac": "44DBD27E63DD"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "📁 Get Photos": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download Photos": {
+      "main": [
+        [
+          {
+            "node": "🔍 OCR Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 OCR Analysis": {
+      "main": [
+        [
+          {
+            "node": "📊 Parse OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Parse OCR": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Save Final CSV": {
+      "main": [
+        [
+          {
+            "node": "✅ Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "📋 Get DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "💾 Save Final CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract dtx": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "CSV 3CX",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "XLSX YMCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Get DTX": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download DTX": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YMCS Format": {
+      "main": [
+        [
+          {
+            "node": "Convert File & Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV 3CX": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XLSX YMCS": {
+      "main": [
+        [
+          {
+            "node": "YMCS Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert File & Download": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2553214f-6ae2-45e9-b1ac-43e174873b7f",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "ASuCRojKT2UkXOpa",
+  "tags": [
+    {
+      "updatedAt": "2025-09-03T14:07:52.287Z",
+      "createdAt": "2025-09-03T14:07:52.287Z",
+      "id": "LcPpxlqlWWESEENe",
+      "name": "3CX Import"
+    },
+    {
+      "updatedAt": "2025-09-03T14:49:42.560Z",
+      "createdAt": "2025-09-03T14:49:42.560Z",
+      "id": "laZOvtAOZQrv1Pfd",
+      "name": "Google Drive"
+    },
+    {
+      "updatedAt": "2025-09-03T14:07:52.791Z",
+      "createdAt": "2025-09-03T14:07:52.791Z",
+      "id": "m4n7QTlGpD5nJspr",
+      "name": "OpenAI"
+    }
+  ]
+}
