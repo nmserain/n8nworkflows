@@ -17,34 +17,66 @@ This repository contains an n8n workflow that automatically backs up all your n8
 - Triggers the workflow daily at 2:00 AM (cron: `0 2 * * *`)
 - You can modify the schedule by editing the cron expression
 
-### 2. Get All Workflows (HTTP Request)
+### 2. Configuration (Set Node)
+- **IMPORTANT**: Configure the repository path here
+- Sets the following variables:
+  - `REPO_PATH`: Path to your git repository (e.g., `/home/user/n8nworkflows`)
+  - `GIT_BRANCH`: Branch to push to
+  - `GIT_USER_NAME`: Git username for commits
+  - `GIT_USER_EMAIL`: Git email for commits
+
+### 3. Get All Workflows (HTTP Request)
 - Fetches all workflows from the n8n API
 - Endpoint: `http://localhost:5678/api/v1/workflows`
 - **Requires**: n8n API credentials
 
-### 3. Process Workflows (Code Node)
+### 4. Process Workflows (Code Node)
 - Processes each workflow and prepares it for saving
 - Creates sanitized filenames based on workflow names
 - Formats workflow data as clean JSON
 
-### 4. Save Workflow Files (Execute Command)
+### 5. Save Workflow Files (Execute Command)
+- Navigates to the repository path from Configuration
 - Creates the `workflows/` directory if it doesn't exist
 - Saves each workflow as a separate JSON file
 
-### 5. Aggregate All Results
+### 6. Aggregate All Results
 - Combines all results for the commit step
 
-### 6. Git Commit and Push (Execute Command)
+### 7. Git Commit and Push (Execute Command)
+- Navigates to the repository path from Configuration
+- Configures git user name and email
 - Adds all workflow files to git
 - Creates a commit with timestamp
 - Pushes to GitHub with retry logic (up to 5 attempts with exponential backoff)
+- Includes error checking for repository path
 
-### 7. Create Backup Summary
+### 8. Create Backup Summary
 - Generates a summary report of the backup operation
 
 ## Setup Instructions
 
-### 1. Configure n8n API Access
+### 1. Import the Workflow
+
+1. Copy the contents of `N8N_GitHub_Daily_Backup.json`
+2. In n8n, click **Workflows** → **Import from File** (or use Ctrl+O)
+3. Paste the JSON content
+4. Save the workflow
+
+### 2. Configure Repository Path
+
+**⚠️ IMPORTANT**: You MUST configure the repository path before running the workflow!
+
+1. In the workflow, click on the **"Configuration"** node (the second node)
+2. Update the `REPO_PATH` value to match your git repository location:
+   - For Docker: Usually something like `/data/git/n8nworkflows` or where you mounted your volume
+   - For local installation: The full path to your git repository (e.g., `/home/user/n8nworkflows`)
+3. Optionally update other configuration values:
+   - `GIT_BRANCH`: The branch to push to (default: `claude/n8n-github-daily-backup-016XHDhyEKzieL9eAJE2gguW`)
+   - `GIT_USER_NAME`: Git username for commits (default: `n8n-backup`)
+   - `GIT_USER_EMAIL`: Git email for commits (default: `backup@n8n.local`)
+
+### 3. Configure n8n API Access
 
 You need to create an API key in n8n and configure it as a credential:
 
@@ -55,23 +87,11 @@ You need to create an API key in n8n and configure it as a credential:
    - **Name**: `X-N8N-API-KEY`
    - **Value**: Your n8n API key
 
-### 2. Configure Git
+### 4. Configure Git (if needed)
 
-Make sure git is configured in your n8n environment:
+Make sure git is configured in your n8n environment. If you're using Docker, you may need to configure git inside the container. The workflow will attempt to configure git automatically using the values from the Configuration node.
 
-```bash
-git config --global user.name "n8n-backup"
-git config --global user.email "backup@n8n.local"
-```
-
-### 3. Import the Workflow
-
-1. Copy the contents of `N8N_GitHub_Daily_Backup.json`
-2. In n8n, click **Workflows** → **Import from File** (or use Ctrl+O)
-3. Paste the JSON content
-4. Save the workflow
-
-### 4. Activate the Workflow
+### 5. Activate the Workflow
 
 1. Click the **Inactive** toggle in the top right to activate
 2. The workflow will now run daily at 2:00 AM
@@ -118,16 +138,32 @@ n8nworkflows/
 
 ## Troubleshooting
 
+### Workflow fails with "can't cd to /home/user/n8nworkflows"
+This is the most common error! It means the repository path in the Configuration node doesn't exist in your n8n environment.
+
+**Solution**:
+1. Click on the **Configuration** node in the workflow
+2. Update the `REPO_PATH` value to the correct path where your git repository is located
+3. To find the correct path, add a temporary Execute Command node and run: `pwd` to see the current directory, or `echo $HOME` to see your home directory
+4. For Docker installations, the path might be `/data` or wherever you mounted your volume
+
 ### Workflow fails at "Get All Workflows"
 - Verify your n8n API key is correct
-- Check that the API URL matches your n8n instance
+- Check that the API URL matches your n8n instance (default: `http://localhost:5678`)
 - Ensure the API is enabled in n8n settings
 
+### Workflow fails at "Save Workflow Files"
+- Verify the `REPO_PATH` in the Configuration node is correct
+- Ensure n8n has write permissions to that directory
+- Check that the git repository is properly initialized
+
 ### Workflow fails at "Git Commit and Push"
-- Verify git is configured with user name and email
+- Verify the `REPO_PATH` in the Configuration node is correct
+- Verify git is configured with user name and email (or use the Configuration node values)
 - Check that you have push access to the repository
-- Ensure the branch name is correct
+- Ensure the branch name in the Configuration node is correct
 - Check network connectivity to GitHub
+- Make sure the repository is initialized with `git init` and has a remote configured
 
 ### No files are committed
 - This is normal if no workflows have changed since the last backup
