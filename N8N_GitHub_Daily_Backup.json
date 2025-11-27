@@ -1,0 +1,204 @@
+{
+  "name": "N8N GitHub Daily Backup",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "schedule-trigger-daily",
+      "name": "Schedule Daily Backup"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "http://localhost:5678/api/v1/workflows",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        240
+      ],
+      "id": "get-all-workflows",
+      "name": "Get All Workflows",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "n8n-api-key",
+          "name": "n8n API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process all workflows and prepare them for saving\nconst workflows = $input.item.json.data;\nconst timestamp = new Date().toISOString();\nconst outputItems = [];\n\nfor (const workflow of workflows) {\n  // Create a clean workflow object\n  const workflowData = {\n    name: workflow.name,\n    nodes: workflow.nodes,\n    pinData: workflow.pinData || {},\n    connections: workflow.connections,\n    active: workflow.active,\n    settings: workflow.settings,\n    versionId: workflow.versionId,\n    meta: workflow.meta,\n    id: workflow.id,\n    tags: workflow.tags || []\n  };\n  \n  // Create filename from workflow name (sanitized)\n  const sanitizedName = workflow.name\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '');\n  \n  const filename = `workflows/${sanitizedName}-${workflow.id}.json`;\n  \n  outputItems.push({\n    json: {\n      filename: filename,\n      content: JSON.stringify(workflowData, null, 2),\n      workflowName: workflow.name,\n      workflowId: workflow.id,\n      timestamp: timestamp\n    }\n  });\n}\n\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        240
+      ],
+      "id": "process-workflows",
+      "name": "Process Workflows"
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\nset -e\n\n# Configuration\nWORKFLOW_DIR=\"workflows\"\nFILENAME=\"{{ $json.filename }}\"\nTIMESTAMP=\"{{ $json.timestamp }}\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p \"$WORKFLOW_DIR\"\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        700,
+        240
+      ],
+      "id": "save-workflow-files",
+      "name": "Save Workflow Files"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        940,
+        240
+      ],
+      "id": "aggregate-results",
+      "name": "Aggregate All Results"
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\nset -e\n\n# Get timestamp for commit message\nTIMESTAMP=\"{{ $('Process Workflows').item.json.timestamp }}\"\nWORKFLOW_COUNT=\"{{ $runIndex + 1 }}\"\n\n# Git operations\ncd /home/user/n8nworkflows\n\n# Configure git (if not already configured)\ngit config user.name \"n8n-backup\" || true\ngit config user.email \"backup@n8n.local\" || true\n\n# Add all workflow files\ngit add workflows/*.json\n\n# Check if there are changes to commit\nif git diff --staged --quiet; then\n  echo \"No changes to commit\"\n  exit 0\nfi\n\n# Create commit\ngit commit -m \"🔄 Backup: ${WORKFLOW_COUNT} workflows - ${TIMESTAMP}\"\n\n# Push to remote (with retries)\nfor i in {1..5}; do\n  if git push -u origin claude/n8n-github-daily-backup-016XHDhyEKzieL9eAJE2gguW; then\n    echo \"Successfully pushed to GitHub\"\n    exit 0\n  else\n    echo \"Push attempt $i failed, retrying in $((2**i)) seconds...\"\n    sleep $((2**i))\n  fi\ndone\n\necho \"Failed to push after 5 attempts\"\nexit 1"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        240
+      ],
+      "id": "git-commit-push",
+      "name": "Git Commit and Push"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create summary of backup operation\nconst items = $input.all();\nconst timestamp = items[0].json.timestamp;\nconst workflowCount = items.length;\n\nconst workflowList = items.map(item => \n  `- ${item.json.workflowName} (${item.json.workflowId})`\n).join('\\n');\n\nreturn {\n  json: {\n    success: true,\n    timestamp: timestamp,\n    workflowCount: workflowCount,\n    message: `Successfully backed up ${workflowCount} workflow(s) to GitHub`,\n    workflows: workflowList\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        240
+      ],
+      "id": "create-summary",
+      "name": "Create Backup Summary"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Daily Backup": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Process Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Workflows": {
+      "main": [
+        [
+          {
+            "node": "Save Workflow Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Workflow Files": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Results": {
+      "main": [
+        [
+          {
+            "node": "Git Commit and Push",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Commit and Push": {
+      "main": [
+        [
+          {
+            "node": "Create Backup Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "n8n-github-backup"
+  },
+  "id": "github-daily-backup",
+  "tags": [
+    {
+      "name": "backup",
+      "id": "backup-tag"
+    },
+    {
+      "name": "github",
+      "id": "github-tag"
+    }
+  ]
+}
