@@ -1,0 +1,259 @@
+{
+  "name": "n8n backups",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "repo-path",
+              "name": "REPO_PATH",
+              "value": "/home/node/backups",
+              "type": "string"
+            },
+            {
+              "id": "git-branch",
+              "name": "GIT_BRANCH",
+              "value": "main",
+              "type": "string"
+            },
+            {
+              "id": "git-user",
+              "name": "GIT_USER_NAME",
+              "value": "nmserain",
+              "type": "string"
+            },
+            {
+              "id": "git-email",
+              "name": "GIT_USER_EMAIL",
+              "value": "n.serain@gmail.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        64
+      ],
+      "id": "7d8a2d7b-49e4-45d0-9417-7ebec6ca3c84",
+      "name": "Configuration"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        64
+      ],
+      "id": "a8ad450e-fe8f-4160-926e-f28782feacc9",
+      "name": "Schedule Daily Backup1"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/api/v1/workflows",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        64
+      ],
+      "id": "ce852e95-365a-412f-8a9b-8910450c1200",
+      "name": "Get All Workflows1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "iIZFEtqGUwVe2B3t",
+          "name": "X-N8N-API-KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process all workflows and prepare them for saving\nconst workflows = $input.item.json.data;\nconst timestamp = new Date().toISOString();\nconst outputItems = [];\n\nfor (const workflow of workflows) {\n  // Create a clean workflow object\n  const workflowData = {\n    name: workflow.name,\n    nodes: workflow.nodes,\n    pinData: workflow.pinData || {},\n    connections: workflow.connections,\n    active: workflow.active,\n    settings: workflow.settings,\n    versionId: workflow.versionId,\n    meta: workflow.meta,\n    id: workflow.id,\n    tags: workflow.tags || []\n  };\n  \n  // Create filename from workflow name (sanitized)\n  const sanitizedName = workflow.name\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '');\n  \n  const filename = `workflows/${sanitizedName}-${workflow.id}.json`;\n  \n  outputItems.push({\n    json: {\n      filename: filename,\n      content: JSON.stringify(workflowData, null, 2),\n      workflowName: workflow.name,\n      workflowId: workflow.id,\n      timestamp: timestamp\n    }\n  });\n}\n\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        64
+      ],
+      "id": "86cddffd-7797-43b6-9a15-cd017568cf30",
+      "name": "Process Workflows1"
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').item.json.REPO_PATH }}\"\nFILENAME=\"{{ $json.filename }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p workflows\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        944,
+        64
+      ],
+      "id": "21ae89b3-940b-4ec8-974a-a68c2a8b24b0",
+      "name": "Save Workflow Files1"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        64
+      ],
+      "id": "75adfc18-97ee-4e19-a308-2dedfcbe8389",
+      "name": "Aggregate All Results1"
+    },
+    {
+      "parameters": {
+        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').item.json.REPO_PATH }}\"\nGIT_BRANCH=\"{{ $('Configuration').item.json.GIT_BRANCH }}\"\nGIT_USER_NAME=\"{{ $('Configuration').item.json.GIT_USER_NAME }}\"\nGIT_USER_EMAIL=\"{{ $('Configuration').item.json.GIT_USER_EMAIL }}\"\nTIMESTAMP=\"{{ $('Process Workflows1').item.json.timestamp }}\"\nWORKFLOW_COUNT=\"{{ $runIndex + 1 }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Configure git (if not already configured)\ngit config user.name \"$GIT_USER_NAME\" || true\ngit config user.email \"$GIT_USER_EMAIL\" || true\n\n# Add all workflow files\nif ls workflows/*.json 1> /dev/null 2>&1; then\n  git add workflows/*.json\nelse\n  echo \"No workflow files found in workflows/ directory\"\n  exit 1\nfi\n\n# Check if there are changes to commit\nif git diff --staged --quiet; then\n  echo \"No changes to commit\"\n  exit 0\nfi\n\n# Create commit\ngit commit -m \"🔄 Backup: ${WORKFLOW_COUNT} workflows - ${TIMESTAMP}\"\n\n# Push to remote (with retries)\nfor i in {1..5}; do\n  if git push -u origin \"$GIT_BRANCH\"; then\n    echo \"Successfully pushed to GitHub\"\n    exit 0\n  else\n    echo \"Push attempt $i failed, retrying in $((2**i)) seconds...\"\n    sleep $((2**i))\n  fi\ndone\n\necho \"Failed to push after 5 attempts\"\nexit 1"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        64
+      ],
+      "id": "66a99cbb-f050-4715-8722-ebed8fc28966",
+      "name": "Git Commit and Push1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Create summary of backup operation\nconst items = $input.all();\nconst timestamp = items[0].json.timestamp;\nconst workflowCount = items.length;\n\nconst workflowList = items.map(item => \n  `- ${item.json.workflowName} (${item.json.workflowId})`\n).join('\\n');\n\nreturn {\n  json: {\n    success: true,\n    timestamp: timestamp,\n    workflowCount: workflowCount,\n    message: `Successfully backed up ${workflowCount} workflow(s) to GitHub`,\n    workflows: workflowList\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        64
+      ],
+      "id": "497bc868-5074-4fbf-971a-6a5b252ebfe3",
+      "name": "Create Backup Summary1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Daily Backup1": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows1": {
+      "main": [
+        [
+          {
+            "node": "Process Workflows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Workflows1": {
+      "main": [
+        [
+          {
+            "node": "Save Workflow Files1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Workflow Files1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All Results1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All Results1": {
+      "main": [
+        [
+          {
+            "node": "Git Commit and Push1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Commit and Push1": {
+      "main": [
+        [
+          {
+            "node": "Create Backup Summary1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "483a81f1-4363-4673-801c-8fa08b0480b3",
+  "meta": null,
+  "id": "sgXgkbEagzKdsEAF",
+  "tags": [
+    {
+      "updatedAt": "2025-11-27T03:02:59.916Z",
+      "createdAt": "2025-11-27T03:02:59.916Z",
+      "id": "ZcHZlbpMvGST7dG8",
+      "name": "backup"
+    },
+    {
+      "updatedAt": "2025-11-27T03:03:00.320Z",
+      "createdAt": "2025-11-27T03:03:00.320Z",
+      "id": "kmoXB2eM9J1BpRn5",
+      "name": "github"
+    }
+  ]
+}
