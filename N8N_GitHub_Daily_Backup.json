@@ -15,11 +15,52 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -40,
+        -240,
         240
       ],
       "id": "schedule-trigger-daily",
       "name": "Schedule Daily Backup"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "repo-path",
+              "name": "REPO_PATH",
+              "value": "/home/user/n8nworkflows",
+              "type": "string"
+            },
+            {
+              "id": "git-branch",
+              "name": "GIT_BRANCH",
+              "value": "claude/n8n-github-daily-backup-016XHDhyEKzieL9eAJE2gguW",
+              "type": "string"
+            },
+            {
+              "id": "git-user",
+              "name": "GIT_USER_NAME",
+              "value": "n8n-backup",
+              "type": "string"
+            },
+            {
+              "id": "git-email",
+              "name": "GIT_USER_EMAIL",
+              "value": "backup@n8n.local",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "config-node",
+      "name": "Configuration"
     },
     {
       "parameters": {
@@ -57,7 +98,7 @@
     },
     {
       "parameters": {
-        "command": "=#!/bin/bash\nset -e\n\n# Configuration\nWORKFLOW_DIR=\"workflows\"\nFILENAME=\"{{ $json.filename }}\"\nTIMESTAMP=\"{{ $json.timestamp }}\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p \"$WORKFLOW_DIR\"\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
+        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').item.json.REPO_PATH }}\"\nFILENAME=\"{{ $json.filename }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p workflows\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -84,7 +125,7 @@
     },
     {
       "parameters": {
-        "command": "=#!/bin/bash\nset -e\n\n# Get timestamp for commit message\nTIMESTAMP=\"{{ $('Process Workflows').item.json.timestamp }}\"\nWORKFLOW_COUNT=\"{{ $runIndex + 1 }}\"\n\n# Git operations\ncd /home/user/n8nworkflows\n\n# Configure git (if not already configured)\ngit config user.name \"n8n-backup\" || true\ngit config user.email \"backup@n8n.local\" || true\n\n# Add all workflow files\ngit add workflows/*.json\n\n# Check if there are changes to commit\nif git diff --staged --quiet; then\n  echo \"No changes to commit\"\n  exit 0\nfi\n\n# Create commit\ngit commit -m \"🔄 Backup: ${WORKFLOW_COUNT} workflows - ${TIMESTAMP}\"\n\n# Push to remote (with retries)\nfor i in {1..5}; do\n  if git push -u origin claude/n8n-github-daily-backup-016XHDhyEKzieL9eAJE2gguW; then\n    echo \"Successfully pushed to GitHub\"\n    exit 0\n  else\n    echo \"Push attempt $i failed, retrying in $((2**i)) seconds...\"\n    sleep $((2**i))\n  fi\ndone\n\necho \"Failed to push after 5 attempts\"\nexit 1"
+        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').item.json.REPO_PATH }}\"\nGIT_BRANCH=\"{{ $('Configuration').item.json.GIT_BRANCH }}\"\nGIT_USER_NAME=\"{{ $('Configuration').item.json.GIT_USER_NAME }}\"\nGIT_USER_EMAIL=\"{{ $('Configuration').item.json.GIT_USER_EMAIL }}\"\nTIMESTAMP=\"{{ $('Process Workflows').item.json.timestamp }}\"\nWORKFLOW_COUNT=\"{{ $runIndex + 1 }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Configure git (if not already configured)\ngit config user.name \"$GIT_USER_NAME\" || true\ngit config user.email \"$GIT_USER_EMAIL\" || true\n\n# Add all workflow files\nif ls workflows/*.json 1> /dev/null 2>&1; then\n  git add workflows/*.json\nelse\n  echo \"No workflow files found in workflows/ directory\"\n  exit 1\nfi\n\n# Check if there are changes to commit\nif git diff --staged --quiet; then\n  echo \"No changes to commit\"\n  exit 0\nfi\n\n# Create commit\ngit commit -m \"🔄 Backup: ${WORKFLOW_COUNT} workflows - ${TIMESTAMP}\"\n\n# Push to remote (with retries)\nfor i in {1..5}; do\n  if git push -u origin \"$GIT_BRANCH\"; then\n    echo \"Successfully pushed to GitHub\"\n    exit 0\n  else\n    echo \"Push attempt $i failed, retrying in $((2**i)) seconds...\"\n    sleep $((2**i))\n  fi\ndone\n\necho \"Failed to push after 5 attempts\"\nexit 1"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -112,6 +153,17 @@
   "pinData": {},
   "connections": {
     "Schedule Daily Backup": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
       "main": [
         [
           {
