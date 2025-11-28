@@ -98,7 +98,7 @@
     },
     {
       "parameters": {
-        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').item.json.REPO_PATH }}\"\nFILENAME=\"{{ $json.filename }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p workflows\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
+        "command": "=#!/bin/bash\nset -e\n\n# Get configuration from previous node\nREPO_PATH=\"{{ $('Configuration').first().json.REPO_PATH }}\"\nFILENAME=\"{{ $json.filename }}\"\n\n# Navigate to repository\nif [ ! -d \"$REPO_PATH\" ]; then\n  echo \"Error: Repository path does not exist: $REPO_PATH\"\n  echo \"Please update the REPO_PATH in the Configuration node\"\n  exit 1\nfi\n\ncd \"$REPO_PATH\"\n\n# Create workflows directory if it doesn't exist\nmkdir -p workflows\n\n# Write workflow content to file\ncat > \"$FILENAME\" << 'EOF'\n{{ $json.content }}\nEOF\n\necho \"Saved workflow: $FILENAME\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
