@@ -154,6 +154,19 @@
       ],
       "id": "8a6da954-bc50-4951-9f58-88f640bb7167",
       "name": "Create Backup Summary2"
+    },
+    {
+      "parameters": {
+        "command": "cd /home/node/backups\ngit status\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        752,
+        256
+      ],
+      "id": "1e0218e0-c44a-4b5b-844e-fb22fb4bffd1",
+      "name": "Execute Command"
     }
   ],
   "pinData": {},
@@ -241,7 +254,7 @@
     "executionOrder": "v1",
     "availableInMCP": true
   },
-  "versionId": "9c407107-fdb3-4fb0-9f7a-c3e44723f625",
+  "versionId": "6c9b6cee-2de3-4e90-9b25-24c133cba3a8",
   "meta": null,
   "id": "sgXgkbEagzKdsEAF",
   "tags": [
