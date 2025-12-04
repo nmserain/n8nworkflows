@@ -1,0 +1,90 @@
+{
+  "name": "Telegram Notification Service",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "ba90f753-6fda-44df-8e62-d48ab967a180",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -112,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format notification message based on input data\nconst input = $input.all();\n\n// Extract data from the first item\nconst data = input[0].json;\n\nconst notificationType = data.notificationType || 'info';\nconst workflowName = data.workflowName || 'Unknown Workflow';\nconst status = data.status || 'running';\nconst message = data.message || '';\nconst executionTime = data.executionTime || null;\nconst errorMessage = data.errorMessage || null;\n\n// Emoji based on notification type and status\nlet emoji = '🔵';\nlet statusText = '';\n\nif (status === 'started') {\n  emoji = '🚀';\n  statusText = 'DÉMARRÉ';\n} else if (status === 'success') {\n  emoji = '✅';\n  statusText = 'TERMINÉ AVEC SUCCÈS';\n} else if (status === 'error') {\n  emoji = '❌';\n  statusText = 'ERREUR';\n} else if (status === 'warning') {\n  emoji = '⚠️';\n  statusText = 'AVERTISSEMENT';\n}\n\n// Build the message\nlet telegramMessage = `${emoji} *${statusText}*\\n\\n`;\ntelegramMessage += `📋 Workflow: *${workflowName}*\\n`;\n\nif (message) {\n  telegramMessage += `\\n💬 ${message}\\n`;\n}\n\nif (executionTime) {\n  telegramMessage += `\\n⏱️ Durée: ${executionTime}s`;\n}\n\nif (errorMessage) {\n  telegramMessage += `\\n\\n🔴 *Erreur:*\\n\\`\\`\\`\\n${errorMessage}\\n\\`\\`\\``;\n}\n\ntelegramMessage += `\\n\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\nreturn [{\n  json: {\n    message: telegramMessage,\n    chatId: data.chatId || '$CHAT_ID',\n    parseMode: 'Markdown'\n  }\n}];"
+      },
+      "id": "04036431-3982-4dc1-94c4-97fabb337ed2",
+      "name": "Format Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "3799e206-c82d-482f-929f-1b06a06bbb00",
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        -16
+      ],
+      "webhookId": "fdad6706-6269-403a-8cf2-37b36364df45",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b9c9a630-82eb-4a2e-8dca-a08babb85daa",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "Wvtp5SjEVchclKdY",
+  "tags": []
+}

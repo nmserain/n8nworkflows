@@ -1,0 +1,86 @@
+{
+  "name": "Telegram Error Monitor",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c019a2ce-96fa-4819-8375-7522a444303a",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        256,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format error notification\nconst input = $input.all();\nconst error = input[0].json;\n\n// Extract workflow information\nconst workflowName = error.workflow?.name || 'Unknown Workflow';\nconst workflowId = error.workflow?.id || 'unknown';\nconst errorMessage = error.execution?.error?.message || 'Unknown error';\nconst errorNode = error.execution?.error?.node?.name || 'Unknown node';\nconst executionId = error.execution?.id || 'unknown';\nconst executionMode = error.execution?.mode || 'unknown';\n\n// Build detailed error message\nlet telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\ntelegramMessage += `📋 Workflow: *${workflowName}*\\n`;\ntelegramMessage += `🔗 ID: \\`${workflowId}\\`\\n`;\ntelegramMessage += `📍 Node: *${errorNode}*\\n`;\ntelegramMessage += `🔄 Mode: ${executionMode}\\n`;\ntelegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorMessage}\\n\\`\\`\\``;\ntelegramMessage += `\\n\\n🆔 Execution ID: \\`${executionId}\\``;\ntelegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\nreturn [{\n  json: {\n    message: telegramMessage,\n    parseMode: 'Markdown'\n  }\n}];"
+      },
+      "id": "09c66228-8370-4591-b7f0-d46ca9f86478",
+      "name": "Format Error Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "5992469226",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "d16a003c-461f-4d95-b018-bbff50caa708",
+      "name": "Send Error Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        48
+      ],
+      "webhookId": "0257c4f6-9edc-4e82-bff1-2316e2481dd9",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Message": {
+      "main": [
+        [
+          {
+            "node": "Send Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bd949f9e-27fc-4be5-b7a1-fd7cdda1871f",
+  "meta": null,
+  "id": "SP9XZTobyCIX1gxF",
+  "tags": []
+}
