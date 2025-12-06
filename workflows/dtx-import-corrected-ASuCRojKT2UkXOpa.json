@@ -321,7 +321,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n  \n\nPrompt Compact : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\nSite (Col 4) : mtq-3cx-{nomclient}-1\n   - Ex: mtq-3cx-eem-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\nPour chaque ligne :\n   - Nettoyer MAC (sans tirets)\n   - Corriger Modèle (appliquer la règle de substitution/standardisation)\n   - Créer Device Name selon pattern\n   - Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\nDTX: Extension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\nYMCS Ligne 1 (données): 44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\n---\n\nDTX: Extension=2201 | Nom=SITE L | Prénom= | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=SIP-W70+W56H\nYMCS Ligne 1 (données): 305EC03F13 | 801081E011217378 | W70B | 2201 - SITE L | mtq-3cx-eem-1 | | | | | | |\nValidation\n✅ MAC 12 caractères sans tirets\n\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n\n✅ Device Name = Extension - Nom\n\n✅ Champs obligatoires remplis\n\n✅ Format Excel .xlsx correct\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format   :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"mtq-3cx-eem-1\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }",
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n\n\nPrompt Compact : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : mtq-3cx-{nomclient}-1\n   - Ex: mtq-3cx-eem-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"mtq-3cx-eem-1\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\n",
               "role": "assistant"
             }
           ]
@@ -355,8 +355,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -928,
-        1732
+        -944,
+        1728
       ],
       "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
       "name": "Webhook",
@@ -441,7 +441,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=# Mission: Generate minimal 3CX import CSV from DTX JSON data\n {{ $json.data.toJsonString() }}\n## Input Data Structure:\nYou receive a JSON array where:\n- First object (index 0) = headers (ignore it)\n- Following objects = user data with these fields:\n  - `DT` = Last name\n  - `DTM51391` = First name (often empty, use DT if empty)\n  - `__EMPTY_1` = Extension number\n  - `__EMPTY_2` = SDA / Incoming DID\n  - `__EMPTY_3` = Outbound Caller ID\n  - `__EMPTY_4` = Phone model (e.g., \"SIP-T54W\", \"SIP-T34W\")\n  - `__EMPTY_7` = Email address\n  - `À compléter : par Dauphin Télécom` = MAC address\n\n## Your Task:\nExtract user data (skip first object) and generate a CSV with EXACTLY 10 columns:\n\n**Column 1: Number**\n- Use `__EMPTY_1` (extension)\n\n**Column 2: FirstName**\n- Use `DT` field (this is actually the name/identifier)\n- If empty or \"*\", skip this user\n\n**Column 3: EmailAddress**\n- Use `__EMPTY_7`\n\n**Column 4: DID**\n- Use `__EMPTY_2` (SDA)\n\n**Column 5: OutboundCallerID**\n- Use `__EMPTY_3` (usually same as DID without prefix)\n\n**Column 6: MAC**\n- Use `À compléter : par Dauphin Télécom` field\n- Format: 12 uppercase hex characters without separators (e.g., \"44DBD2B35B64\")\n\n**Column 7: Router**\n- Same value as MAC (Column 6)\n\n**Column 8: Model**\n- Convert `__EMPTY_4` phone model:\n  - \"SIP-T54W\" → \"Yealink T54W\"\n  - \"SIP-T34W\" → \"Yealink T34W\"\n  - \"SIP-T57W\" → \"Yealink T57W\"\n\n**Column 9: WebMeetingFriendlyName**\n- Create from FirstName: lowercase + random 4 digits\n- Example: \"ATTACHEE DE DIRECTION\" → \"attacheededi\" + \"5813\" = \"attacheededi5813\"\n- Remove spaces and special chars, keep first 12 chars max\n\n**Column 10: VMPIN**\n- Generate random 4-digit number (1000-9999)\n\n## Skip Rules:\n- Skip first object (headers)\n- Skip objects where DT starts with \"*\" or is empty\n- Skip objects where __EMPTY_1 (extension) is empty\n\n## Output Format:\n```\nNumber,FirstName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN\n2020,ATTACHEE DE DIRECTION,spl@martinique-energies-nouvelles.mq,596596765020,596765020,44DBD2B35B64,44DBD2B35B64,Yealink T54W,attacheededi5813,5813\n2021,CLERY,developpement3@martinique-energies-nouvelles.mq,596596765021,596765021,44DBD27E72A8,44DBD27E72A8,Yealink T34W,clery2090,2090\n```\n\n## Critical Rules:\n- Return ONLY raw CSV text (no markdown, no code blocks, no explanations)\n- First line = headers exactly as shown above\n- One line per valid user\n- If a field is missing, use empty string \"\"\n- Ensure MACs are properly formatted (12 hex chars)\n",
+        "text": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n\n\n# Prompt de conversion DTX → CSV 3CX V20\n\n## Instructions\nConvertis le fichier Excel DTX en CSV d'import 3CX V20 en suivant ces règles strictes :\n\n### 1. EXTRACTION DES DONNÉES\n- Feuille : \"DT Recap\"\n- En-têtes : ligne 7 ou 8 (chercher \"Extension\", \"Nom\", \"MAC\")\n- Colonnes DTX : Lieu | Nom | Prénom | Extension | SDA | Affichage sortant | GDM | Modèle | Casque | Softphone | Email | MAC | SN | SBC | IP\n\n### 2. IDENTIFICATION DU ROUTEUR\n- **Si colonne SBC contient \"SBC\" + numéro** (ex: \"SBC 1\") → C'est un téléphone routeur\n  - Le champ Router = son propre MAC\n- **Si colonne SBC contient juste un numéro** (ex: \"1\", \"2\") → Téléphone standard\n  - Le champ Router = MAC du routeur SBC correspondant\n- **Cas spécial** : Si pas de mention SBC, le premier téléphone (souvent ACCUEIL) est le routeur\n\n### 3. RÈGLES DE CONVERSION\n\n**Champs obligatoires :**\nNumber: [Extension]\nFirstName: [Nom]\nLastName: [Prénom]\nEmailAddress :\n- Utiliser l'email original du fichier\n- Si l'email contient une virgule, remplacer UNIQUEMENT les virgules par des points (ex: jean,dupont@mairie,fr → jean.dupont@mairie.fr)\n- Ne jamais générer d'email si le champ est vide\n- Ne jamais modifier d'autres caractères que les virgules\nOutboundCallerID: [Affichage sortant sans espaces]\nDID: [Ajouter préfixe 596 au SDA - ex: 707630 → 596707630]\nRole: \"<role name=\"\"users\"\" />\"\nDepartment: DEFAULT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset) :**\nSi le modèle est \"W56H\" ou \"SIP-W56H\" :\n- MAC: VIDE (\"\")\n- Router: VIDE (\"\")\n- Model: VIDE (\"\")\n- Template: VIDE (\"\")\n- Tous les autres champs doivent être remplis normalement\n- Exemple : 2080,Jacqueline,JOSEPH,,,596508600,,\"<role name=\"\"users\"\" />\",DEFAULT,,,jacquelinejose5671,,,,,,,,,1,0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5,0,9719,1,1,0,0,,0,0,,0,0,0,0,0,0,,0,,0,,0,0,0,0,,,,0,,,,<PhoneDevice><BLFS /></PhoneDevice>\n\n**Pour les téléphones NORMAUX (non W56H) :**\nMAC: [MAC du téléphone]\nRouter: [MAC du routeur SBC]\nModel: Mapper SIP-T54W→Yealink T54W, SIP-T34W→Yealink T34W, SIP-T31G→Yealink T33G\nTemplate: yealinkT4x.ph.xml\nLanguage: French\nWebMeetingFriendlyName: [nom+prenom en minuscules sans espaces/accents, max 15 chars + 2-4 chiffres aléatoires]\n\n**Paramètres fixes :**\nMobileNumber:\nClickToCallAuth:\nWMApprove:\nRingtone: Ring1.wav\nQRingtone: Ring6.wav\nVMEnable: 1\nVMLanguage: 0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\nVMPlayMsgDateTime: 0\nVMPIN: [4 chiffres aléatoires]\nVMEmailOptions: 1\nVMNoPin: 1\nVMPlayCallerID: 0\nRecordCalls: 0\nRecordExternal:\nRecordCanSee: 0\nRecordCanDelete: 0\nRecordStartStop:\nRecordNotify: 0\nDisabled: 0\nHideFWrules: 0\nDisableExternalCalls: 0\nHideInPhonebook: 0\nCallScreening: 0\nPinProtected:\nPinTimeout: 0\nTranscription:\nAllowLanOnly: 1\nSIPID:\nDeliverAudio: 0\nHotDesk:\nSRTPMode: 0\nEmailMissedCalls: 0\nMS365SignInDisabled:\nMS365CalendarDisabled:\nMS365ContactsDisabled:\nMS365TeamsDisabled:\nGoogleSignInDisabled:\nGoogleContactsDisabled:\nGoogleCalendarDisabled:\nBLF: \"<PhoneDevice><BLFS /></PhoneDevice>\"\n\n### 4. FORMAT FINAL\n- CSV avec toutes les colonnes dans l'ordre exact\n- Séparateur : virgule\n- Encodage : UTF-8\n- Première ligne : en-têtes\n- Toute valeur contenant des virgules ou < > doit être entre guillemets\n\n### 5. EXEMPLE DE SORTIE\n\n**Exemple W56H (DECT)** :\n2080,Jacqueline,JOSEPH,,,596508600,,\"<role name=\"\"users\"\" />\",DEFAULT,,,jacquelinejose5671,9719,,,,Ring1.wav,Ring6.wav,1,0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5,0,1,1,0,0,,0,0,,0,0,0,0,0,0,,0,,1,,0,0,0,0,,,,0,,,,,\"<PhoneDevice><BLFS /></PhoneDevice>\"\n\n**Exemple téléphone normal** :\n2000,ACCUEIL,,,596707630,596707630,44DBD2A67CBF,44DBD2A67CBF,Yealink T54W,yealinkT4x.ph.xml,French,accueil1234,5678,,,,Ring1.wav,Ring6.wav,1,0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5,0,1,1,0,0,,0,0,,0,0,0,0,0,0,,0,,1,,0,0,0,0,,,,0,,,,,\"<PhoneDevice><BLFS /></PhoneDevice>\"\n\n### 6. CONTRAINTES FINALES STRICTES\n- Tu DOIS générer **EXACTEMENT le nombre de lignes correspondant au fichier source**, sans omission.\n- Si une des lignes dépasse, **tu réécris TOUT** plutôt que de tronquer.\n- **Interdit** : texte explicatif, \"Voici le CSV\", ```csv, ``` ou tout autre balisage.\n- La réponse DOIT **commencer directement par la ligne d'en-tête CSV**.\n- **Si une adresse e-mail contient une virgule, ne remplacer QUE la virgule par un point.**\n- **À la fin du fichier**, ajoute une ligne de contrôle au format :\n`# TOTAL_LIGNES=[nombre réel de lignes générées hors en-tête]`\n- Tu DOIS vérifier en interne que ce nombre correspond AVANT d'envoyer.\n- **Aucune coupure autorisée. Priorité : complétude totale du CSV.**\n\nIMPORTANT — NE RETOURNE STRICTEMENT RIEN D'AUTRE QUE LE CONTENU CSV + la ligne TOTAL_LIGNES\n",
         "options": {
           "maxIterations": 100
         }
@@ -473,48 +473,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        -480,
-        1780
-      ],
-      "id": "01e77f85-2719-417e-95b2-378f5ff92431",
-      "name": "Call 'Telegram Notification Service'"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "Wvtp5SjEVchclKdY",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/Wvtp5SjEVchclKdY",
-          "cachedResultName": "Telegram Notification Service"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {}
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
         1568,
         1540
       ],
       "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
       "name": "Call 'Telegram Notification Service'1"
-    },
-    {
-      "parameters": {
-        "jsCode": "const workflowName = $workflow.name;\nreturn [{\n  json: {\n    notificationType: 'start',\n    workflowName: workflowName,\n    status: 'started',\n    message: 'Workflow démarré',\n    chatId: '5992469226'\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -704,
-        1776
-      ],
-      "id": "4daa13a7-5876-4860-bdf1-ce2e5c35826e",
-      "name": "Code in JavaScript1"
     },
     {
       "parameters": {
@@ -546,350 +509,6 @@
           "model": "SIP-T34W",
           "serial": "201037G090017101",
           "mac": "44DBD27E63DD"
-        }
-      }
-    ],
-    "Extract dtx": [
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Nom client ",
-          "DTM51391": "SPL MARTINIQUE ENERGIES NOUVELLES",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "N° de Licence",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Multi tenants : ",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Mis à jour le :",
-          "DTM51391": 45940,
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "Lieu (commune ou autre site)",
-          "DT": "Nom",
-          "DTM51391": "Prénom",
-          "__EMPTY_1": "Extension",
-          "__EMPTY_2": "SDA / Appels entrants",
-          "__EMPTY_3": "Affichage Appels sortants",
-          "__EMPTY_4": "Modèle de téléphone",
-          "__EMPTY_5": "Casque",
-          "__EMPTY_6": "Softphone",
-          "__EMPTY_7": "email",
-          "À compléter : par Dauphin Télécom": "MAC",
-          "__EMPTY_8": "SN",
-          "__EMPTY_9": "SBC",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "FORT DE FRANCE",
-          "DT": "ATTACHEE DE DIRECTION",
-          "DTM51391": "",
-          "__EMPTY_1": 2020,
-          "__EMPTY_2": 596596765020,
-          "__EMPTY_3": 596765020,
-          "__EMPTY_4": "SIP-T54W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "spl@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD2B35B64",
-          "__EMPTY_8": "201081G120026414",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "CLERY",
-          "DTM51391": "",
-          "__EMPTY_1": 2021,
-          "__EMPTY_2": 596596765021,
-          "__EMPTY_3": 596765021,
-          "__EMPTY_4": "SIP-T34W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "developpement3@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD27E72A8",
-          "__EMPTY_8": "201037G090018318",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "CIRENCIEN",
-          "DTM51391": "",
-          "__EMPTY_1": 2022,
-          "__EMPTY_2": 596596765022,
-          "__EMPTY_3": 596765022,
-          "__EMPTY_4": "SIP-T34W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "developpement2@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD27E6796",
-          "__EMPTY_8": "201037G090018544",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "BRANCHET",
-          "DTM51391": "",
-          "__EMPTY_1": 2023,
-          "__EMPTY_2": 596596765023,
-          "__EMPTY_3": 596765023,
-          "__EMPTY_4": "SIP-T34W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "exploitation.spl@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD26042D1",
-          "__EMPTY_8": "201037G070021799",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "DIRECTEUR",
-          "DTM51391": "",
-          "__EMPTY_1": 2024,
-          "__EMPTY_2": 596596765024,
-          "__EMPTY_3": 596765024,
-          "__EMPTY_4": "SIP-T34W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "dokui.s@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD260426E",
-          "__EMPTY_8": "201037G070021855",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "LABONNE",
-          "DTM51391": "",
-          "__EMPTY_1": 2025,
-          "__EMPTY_2": 596596765025,
-          "__EMPTY_3": 596765025,
-          "__EMPTY_4": "SIP-T34W",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "oui",
-          "__EMPTY_7": "developpement1@martinique-energies-nouvelles.mq",
-          "À compléter : par Dauphin Télécom": "44DBD2604172",
-          "__EMPTY_8": "201037G070021675",
-          "__EMPTY_9": "44DBD2B35B64",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "*Scénarios d'appels :",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "*(Définition des agents ou groupes destinataires des appels, ordre de sonnerie, plages horaires de réception, messagerie vocale et répondeur numérique)",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "ELEMENTS  COMPLEMENTAIRES",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Message audio : ",
-          "DTM51391": "non",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Fourni par : ",
-          "DTM51391": "Dauphin",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "Groupe d'appels :",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "File d'attente :",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
-        }
-      },
-      {
-        "json": {
-          "__EMPTY": "",
-          "DT": "SVI (IVR) :",
-          "DTM51391": "",
-          "__EMPTY_1": "",
-          "__EMPTY_2": "",
-          "__EMPTY_3": "",
-          "__EMPTY_4": "",
-          "__EMPTY_5": "",
-          "__EMPTY_6": "",
-          "__EMPTY_7": "",
-          "À compléter : par Dauphin Télécom": "",
-          "__EMPTY_8": "",
-          "__EMPTY_9": "",
-          "__EMPTY_10": ""
         }
       }
     ]
@@ -1069,11 +688,6 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript1",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Extract dtx",
             "type": "main",
             "index": 0
@@ -1147,27 +761,11 @@
         ]
       ]
     },
-    "Call 'Telegram Notification Service'": {
-      "main": [
-        []
-      ]
-    },
     "Respond to Webhook": {
       "main": [
         [
           {
             "node": "Code in JavaScript2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript1": {
-      "main": [
-        [
-          {
-            "node": "Call 'Telegram Notification Service'",
             "type": "main",
             "index": 0
           }
@@ -1196,7 +794,7 @@
     "executionOrder": "v1",
     "availableInMCP": true
   },
-  "versionId": "dff52cd4-13b8-4023-bd89-25cee57f8409",
+  "versionId": "f9048cf6-2145-4566-a57a-a73261795d9d",
   "meta": {
     "templateCredsSetupCompleted": true
   },
