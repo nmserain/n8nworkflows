@@ -1,0 +1,1185 @@
+{
+  "name": "DTX Import (WITH BLF)",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1wShjd64G8jEsg3PWV_nSeF9x4lE48ud_",
+            "mode": "list",
+            "cachedResultName": "Photos MAC SN"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1376,
+        960
+      ],
+      "id": "0635a4ee-4dbf-4391-ab0c-a811973f47d1",
+      "name": "📁 Get Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1152,
+        960
+      ],
+      "id": "7287da7c-18cd-4f66-bb2f-c2a1a54b6d01",
+      "name": "⬇️ Download Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list"
+        },
+        "text": "Extract the following information from this photo:\n- The phone model (e.g. \"SIP-T34W\", \"SIP-T54W\")\n- All Serial Numbers (SN)\n- All MAC addresses\n\nReturn the result as a pure JSON array of objects.\n⚠️ Do not add any text, comments, explanations, or markdown formatting.\n⚠️ Only return valid JSON.\n\nExample format:\n[\n  {\n    \"filename\": \"{{ $json.name }}\",\n    \"model\": \"SIP-T34W\",\n    \"serial\": \"201037G090016613\",\n    \"mac\": \"44DBD27E72B7\"\n  }\n]",
+        "inputType": "base64",
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -928,
+        960
+      ],
+      "id": "8ea21603-35c8-466c-941f-0c988525b1ca",
+      "name": "🔍 OCR Analysis",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse OCR JSON results\nconst output = [];\nfor (const item of items) {\n  try {\n    const parsed = JSON.parse(item.json.content);\n    const rows = Array.isArray(parsed) ? parsed : [parsed];\n\n    for (const row of rows) {\n      output.push({ json: row });\n    }\n  } catch (e) {\n    output.push({ json: { error: e.message, raw: item.json.content } });\n  }\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        960
+      ],
+      "id": "6a31cb8f-2b58-4409-bd24-240d09d2dfe0",
+      "name": "📊 Parse OCR"
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "fileName": "={{ $json.filename }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        960
+      ],
+      "id": "d285d19f-3e7d-4ee7-b98a-562eb42b0a47",
+      "name": "💾 Save Final CSV"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        96,
+        960
+      ],
+      "id": "76154c2f-310c-4d8e-b561-804a9009c83b",
+      "name": "✅ Success"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        1316
+      ],
+      "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Mission: Create a valid 3CX import CSV\n\n## Data Available:\n- MAC phones (JSON array):\n\n- DTX users (JSON array):\n\n- Example CSV format:\n\n## Rules:\n- CSV must have exactly 54 columns, matching the headers in the example.\n- Each row = one DTX user.\n- Assign phones to users:\n  - DTX model \"T54\" → SIP-T54W phone (unique MAC).\n  - DTX model \"T57\" → SIP-T57W phone (unique MAC).\n  - DTX model \"T34\" → SIP-T34W phone (unique MAC).\n- No MAC can be used twice.\n- Default values: (fill with example if missing)\n  - Role = `<role name=\"users\" />`\n  - Department = `DEFAULT`\n  - VMEnable = `1`\n  - VMPIN = random 6-digit number\n  - etc. (follow example CSV)\n\n## Output Requirements:\n- Only return raw CSV text (no markdown, no explanations).\n- Each row must contain exactly 54 values.\n- If data is missing, insert an empty string \"\" to preserve 54 columns.\n",
+        "options": {
+          "systemMessage": "You are an expert in 3CX phone system configuration.\nYour task is to generate a perfectly valid 3CX import CSV file.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        960
+      ],
+      "id": "eeab17d9-d6ec-4566-afc7-b0dbe29a0567",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -472,
+        1184
+      ],
+      "id": "150c98b6-5faa-47f8-9b6e-26d916d42e6d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "The Agent can call this tool on its own output. If invalid, it regenerates.",
+        "jsCode": "function validateCSV(csvText) {\n  const lines = csvText.trim().split('\\n');\n  const expectedCols = 54;\n  for (let i = 0; i < lines.length; i++) {\n    const cols = lines[i].split(',');\n    if (cols.length !== expectedCols) {\n      return { valid: false, row: i+1, cols: cols.length };\n    }\n  }\n  return { valid: true, rows: lines.length };\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -344,
+        1184
+      ],
+      "id": "b5637114-40f3-4dfb-bf89-9a6a746cb120",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "includeEmptyCells": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        1412
+      ],
+      "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
+      "name": "Extract dtx",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        1412
+      ],
+      "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "limit": 1,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1svPiSEnDh_FclOa8prgZciYDiROMg0hP",
+            "mode": "list",
+            "cachedResultName": "dtx to ymcs ",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1svPiSEnDh_FclOa8prgZciYDiROMg0hP"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -1152,
+        1316
+      ],
+      "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
+      "name": "📋 Get DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -928,
+        1316
+      ],
+      "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
+      "name": "⬇️ Download DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire le JSON de la réponse de l'IA\nconst response = $input.first().json;\nconst content = response.message.content;\nconst data = JSON.parse(content);\n\n// Préparer les données au format attendu par Convert to File\nconst devices = data.devices.map(device => ({\n  '*MAC': device.MAC,\n  '*Machine ID(Serial Number)': device.MachineID,\n  'Model': device.Model,\n  'Device Name': device.DeviceName,\n  'Site': device.Site,\n  'Unique URL': device.UniqueURL,\n  'User Name': device.UserName,\n  'Password': device.Password,\n  'Description': device.Description,\n  'Account Type': device.AccountType,\n  'Account Info': device.AccountInfo,\n  'Account Line': device.AccountLine\n}));\n\n// Retourner les données formatées\nreturn devices.map(device => ({ json: device }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        1288
+      ],
+      "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
+      "name": "YMCS Format"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "compression": true,
+          "fileName": "=import_ymcs.xlsx",
+          "headerRow": true,
+          "sheetName": "devices_template"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        1288
+      ],
+      "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
+      "name": "Convert File & Download"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n\n\nPrompt Compact : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : mtq-3cx-{nomclient}-1\n   - Ex: mtq-3cx-eem-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"mtq-3cx-eem-1\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\n",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        320,
+        1288
+      ],
+      "id": "98f5923f-e4af-4fd3-83a6-1bf4971d5b50",
+      "name": "XLSX YMCS",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c3e0bfb4-f260-48bb-87d3-118d49ad26da",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        1508
+      ],
+      "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
+      "name": "Webhook",
+      "webhookId": "c3e0bfb4-f260-48bb-87d3-118d49ad26da"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1568,
+        1412
+      ],
+      "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1120,
+        1412
+      ],
+      "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Préparer la réponse JSON avec les 2 fichiers en base64\nconst csv_3cx = items.find(item => item.binary?.data?.fileName?.includes('3cx'));\nconst xlsx_ymcs = items.find(item => item.binary?.data?.fileName?.includes('ymcs'));\n\nreturn [{\n  json: {\n    success: true,\n    files: {\n      csv_3cx: {\n        filename: csv_3cx?.binary?.data?.fileName || '3cx_import.csv',\n        data: csv_3cx?.binary?.data?.data?.toString('base64') || ''\n      },\n      xlsx_ymcs: {\n        filename: xlsx_ymcs?.binary?.data?.fileName || 'import_ymcs.xlsx',\n        data: xlsx_ymcs?.binary?.data?.data?.toString('base64') || ''\n      }\n    },\n    message: 'Files processed successfully',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        1412
+      ],
+      "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupération brute de la réponse IA (gestion multi-formats)\nconst response = $input.first().json;\n\n// Essayer différents formats possibles de sortie OpenAI\nlet csvContent = '';\n\nif (response.message && response.message.content) {\n  csvContent = response.message.content.trim();\n} else if (response.content) {\n  csvContent = response.content.trim();\n} else if (response.output) {\n  csvContent = response.output.trim();\n} else if (response.text) {\n  csvContent = response.text.trim();\n} else if (typeof response === 'string') {\n  csvContent = response.trim();\n} else {\n  csvContent = JSON.stringify(response);\n}\n\n// Fonction de parsing CSV robuste (gère les guillemets et décalages)\nfunction parseCSV(data) {\n  const lines = data.split('\\n').filter(line => {\n    const trimmed = line.trim();\n    // Filtrer les lignes vides et les commentaires\n    return trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//');\n  });\n\n  if (lines.length === 0) return [];\n\n  // Parser les headers\n  const headers = [];\n  let current = '';\n  let insideQuotes = false;\n  const headerLine = lines[0];\n\n  for (let i = 0; i < headerLine.length; i++) {\n    const char = headerLine[i];\n    const nextChar = headerLine[i + 1];\n\n    if (char === '\"') {\n      if (insideQuotes && nextChar === '\"') {\n        current += '\"';\n        i++;\n      } else {\n        insideQuotes = !insideQuotes;\n      }\n    } else if (char === ',' && !insideQuotes) {\n      headers.push(current.trim());\n      current = '';\n    } else {\n      current += char;\n    }\n  }\n  headers.push(current.trim());\n\n  const expectedColumns = headers.length;\n  console.log(`CSV Headers: ${expectedColumns} colonnes attendues`);\n\n  // Parser les lignes de données\n  const rows = [];\n  for (let lineIdx = 1; lineIdx < lines.length; lineIdx++) {\n    const line = lines[lineIdx];\n    const row = [];\n    current = '';\n    insideQuotes = false;\n\n    for (let charIndex = 0; charIndex < line.length; charIndex++) {\n      const char = line[charIndex];\n      const nextChar = line[charIndex + 1];\n\n      if (char === '\"') {\n        if (insideQuotes && nextChar === '\"') {\n          current += '\"';\n          charIndex++;\n        } else {\n          insideQuotes = !insideQuotes;\n        }\n      } else if (char === ',' && !insideQuotes) {\n        row.push(current.trim());\n        current = '';\n      } else {\n        current += char;\n      }\n    }\n    row.push(current.trim());\n\n    // Vérifier que le nombre de colonnes correspond\n    if (row.length !== expectedColumns) {\n      console.warn(`Ligne ${lineIdx + 1}: ${row.length} colonnes au lieu de ${expectedColumns} - IGNORÉE`);\n      console.warn(`Début de ligne: ${line.substring(0, 100)}`);\n      continue; // Ignorer les lignes mal formatées\n    }\n\n    rows.push(row);\n  }\n\n  // Convertir en objets\n  return rows.map(cols => {\n    const obj = {};\n    headers.forEach((header, idx) => {\n      obj[header] = cols[idx] || '';\n    });\n    return obj;\n  });\n}\n\nconst parsed = parseCSV(csvContent);\n\nconsole.log(`✅ ${parsed.length} lignes parsées avec succès`);\n\n// Retourner chaque ligne formatée\nreturn parsed.map(row => ({ json: row }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        1536
+      ],
+      "id": "e60759b1-ead0-4260-af48-3e441ce369c9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "chatgpt-4o-latest"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        40,
+        1760
+      ],
+      "id": "e434ca5b-6b8d-4856-9349-7539893fc62e",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Wvtp5SjEVchclKdY",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Wvtp5SjEVchclKdY",
+          "cachedResultName": "Telegram Notification Service"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2016,
+        1412
+      ],
+      "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
+      "name": "Call 'Telegram Notification Service'1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowName = $workflow.name;\nconst startTime = new Date($execution.startedAt).getTime();\nconst endTime = Date.now();\nconst executionTime = ((endTime - startTime) / 1000).toFixed(2);\n\nreturn [{\n  json: {\n    notificationType: 'success',\n    workflowName: workflowName,\n    status: 'success',\n    message: 'Workflow terminé avec succès',\n    executionTime: executionTime,\n    chatId: '5992469226'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        1412
+      ],
+      "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// GÉNÉRATION BLF DYNAMIQUE\n// Version 1.0\n// ============================================\n\n// Récupérer tous les items de l'agrégation\nconst allItems = $input.all();\n\n// Extraire toutes les extensions avec leurs IDs\nconst extractExtensions = () => {\n  const extensions = [];\n\n  for (const item of allItems) {\n    const data = item.json.data;\n\n    // Ignorer le header (première ligne)\n    if (Array.isArray(data) && data.length > 1) {\n      for (let i = 1; i < data.length; i++) {\n        const row = data[i];\n\n        // Chercher les colonnes Extension et potentiellement ID_3CX\n        // Les noms de colonnes peuvent varier : __EMPTY_1, Extension, etc.\n        let extension = null;\n        let id3cx = null;\n\n        // Essayer différentes clés possibles pour l'extension\n        if (row.__EMPTY_1) extension = row.__EMPTY_1;\n        else if (row.Extension) extension = row.Extension;\n        else if (row.extension) extension = row.extension;\n\n        // Si pas d'extension, ignorer cette ligne\n        if (!extension || extension === '' || String(extension).startsWith('*')) {\n          continue;\n        }\n\n        // Chercher l'ID 3CX (si disponible)\n        if (row.ID_3CX) id3cx = row.ID_3CX;\n        else if (row.id_3cx) id3cx = row.id_3cx;\n\n        // Si pas d'ID 3CX, utiliser le numéro d'extension\n        if (!id3cx) id3cx = extension;\n\n        extensions.push({\n          numero: String(extension).trim(),\n          id3cx: String(id3cx).trim()\n        });\n      }\n    }\n  }\n\n  return extensions;\n};\n\n// Extraire les extensions\nconst allExtensions = extractExtensions();\n\n// Dédupliquer par numéro d'extension\nconst uniqueExtensions = [];\nconst seen = new Set();\n\nfor (const ext of allExtensions) {\n  if (!seen.has(ext.numero)) {\n    seen.add(ext.numero);\n    uniqueExtensions.push(ext);\n  }\n}\n\n// Trier par numéro (ordre croissant)\nuniqueExtensions.sort((a, b) => {\n  const numA = parseInt(a.numero) || 0;\n  const numB = parseInt(b.numero) || 0;\n  return numA - numB;\n});\n\n// Limiter à 18 BLF maximum\nconst blfExtensions = uniqueExtensions.slice(0, 18);\n\n// Générer le XML BLF\nlet blfXml = '<PhoneDevice><BLFS>';\n\nfor (let i = 0; i < blfExtensions.length; i++) {\n  const ext = blfExtensions[i];\n  const blfNo = i + 1;\n\n  blfXml += `<BLF BLFNo=\"${blfNo}\" BLFType=\"BLF\" BLFTypeID=\"0\" ID=\"${ext.id3cx}\">${ext.numero}</BLF>`;\n}\n\nblfXml += '</BLFS></PhoneDevice>';\n\n// Log pour debug\nconsole.log(`BLF généré avec ${blfExtensions.length} extensions`);\nconsole.log(`Échantillon : ${blfExtensions.slice(0, 3).map(e => e.numero).join(', ')}...`);\n\n// Retourner tous les items avec le BLF XML ajouté\nreturn allItems.map(item => ({\n  json: {\n    ...item.json,\n    blfXmlGenerated: blfXml\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        1412
+      ],
+      "id": "e2a3a9f3-6f09-4171-ba1d-ae90ed041c4a",
+      "name": "Generate BLF XML"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voici les données du fichier Excel DTX en format JSON :\n{{ JSON.stringify($json.data) }}\n\n# Prompt de conversion DTX → CSV 3CX (COLONNES MINIMALES)\n\n## Mission\nExtraire les données VARIABLES de chaque utilisateur du fichier DTX.\nLes colonnes constantes seront ajoutées automatiquement par le système.\n\n## Colonnes à générer (SEULEMENT 13 colonnes)\n\n**Column 1: Number** - Extension (ex: 2001, 2002)\n**Column 2: FirstName** - Nom/Service (ex: \"Accueil\", \"Infirmier\")\n**Column 3: LastName** - Prénom (souvent vide, utiliser \"\")\n**Column 4: EmailAddress** - Email de l'utilisateur\n**Column 5: DID** - SDA avec préfixe 596 (ex: 596596421201)\n**Column 6: OutboundCallerID** - Numéro sortant (ex: 0596421201)\n**Column 7: MAC** - Adresse MAC 12 caractères MAJUSCULES sans tirets (ex: 44DBD2B367BE)\n**Column 8: Router** - MAC du routeur (même valeur que MAC si c'est le routeur, sinon MAC du premier téléphone)\n**Column 9: Model** - Modèle téléphone (ex: \"Yealink T54W\", \"Yealink T34W\", \"Yealink T33G\")\n**Column 10: WebMeetingFriendlyName** - Nom meeting : nom en minuscules + 4 chiffres aléatoires (ex: \"accueil2001\"). la somme des caractères doit être inférieur à 10\n**Column 11: VMPIN** - PIN messagerie : 4 chiffres aléatoires (ex: \"3714\")\n**Column 12: Role** - Toujours : <role name=\"users\" />\n**Column 13: Department** - Toujours : DEFAULT\n\n## Extraction des données du JSON\n\nLe JSON contient :\n- Première ligne (index 0) = headers (ignorer)\n- Lignes suivantes = données utilisateurs\n\nChamps DTX à utiliser :\n- `__EMPTY_1` = Extension (Number)\n- `DT` = Nom (FirstName)\n- `DTM52690` = Prénom (LastName, souvent vide)\n- `__EMPTY_7` = Email (EmailAddress)\n- `__EMPTY_2` = SDA (pour DID - ajouter préfixe 596)\n- `__EMPTY_3` = Numéro sortant (OutboundCallerID)\n- `À compléter : par Dauphin Télécom` = MAC\n- `__EMPTY_9` = Router MAC\n- `__EMPTY_4` = Modèle (Model)\n\n## Règles de transformation\n\n1. **Extension >= 2000** : Ne traiter que les lignes avec Extension >= 2000\n2. **MAC** : Nettoyer (enlever tirets/espaces), 12 caractères MAJUSCULES\n3. **DID** : Ajouter préfixe \"596\" au SDA (ex: 0596421201 → 5960596421201)\n4. **Model** : Mapper les modèles\n   - \"T54\" ou \"SIP-T54\" → \"Yealink T54W\"\n   - \"T34\" ou \"SIP-T34\" → \"Yealink T34W\"\n   - \"T31G\" → \"Yealink T33G\"\n5. **WebMeetingFriendlyName** : Nom en minuscules + 4 chiffres (ex: \"accueil2001\")\n6. **VMPIN** : Générer 4 chiffres aléatoires\n7. **Role** : Toujours `<role name=\"users\" />`\n8. **Department** : Toujours \"DEFAULT\"\n\n## Format de sortie\n\nCSV avec EXACTEMENT 13 colonnes, séparées par des virgules.\nPremière ligne = headers (obligatoire)\nLignes suivantes = données\n\n**IMPORTANT** :\n- Entourer de guillemets doubles les valeurs contenant : virgules, < >, espaces multiples\n- Champs vides = deux virgules consécutives (,,) ou guillemets vides (\"\")\n- NE PAS ajouter de ligne \"# TOTAL_LIGNES\"\n- Retourner UNIQUEMENT le CSV brut, pas de markdown (```csv)\n\n## Exemple de sortie\n\n```\nNumber,FirstName,LastName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN,Role,Department\n2001,Accueil,,service.informatique@ove-caraibes.com,5960596421201,0596421201,44DBD2B367BE,44DBD2B367BE,Yealink T54W,accueil2001,3714,\"<role name=\"\"users\"\" />\",DEFAULT\n2002,Infirmier,,service.informatique@ove-caraibes.com,5960596655003,0596421201,44DBD288F416,44DBD2B367BE,Yealink T34W,infirmier2002,6802,\"<role name=\"\"users\"\" />\",DEFAULT\n```\n\n⚠️ **RÈGLES CRITIQUES** :\n1. Toutes les lignes doivent avoir EXACTEMENT 13 colonnes\n2. Pas de ligne de commentaire ou de contrôle\n3. Retourner UNIQUEMENT le CSV (pas de texte explicatif ni de ```\\n)\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -32,
+        1536
+      ],
+      "id": "6323d640-29d4-4a36-89a6-bcccd56eecdd",
+      "name": "CSV 3CX"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// AJOUT DES COLONNES CONSTANTES\n// Version finale avec récupération BLF via $items()\n// ============================================\n\n// Récupérer le BLF XML généré par le nœud \"Generate BLF XML\"\nlet blfXmlGenerated = \"<PhoneDevice><BLFS/></PhoneDevice>\"; // Valeur par défaut\n\ntry {\n  // Récupérer les items du nœud \"Generate BLF XML\"\n  const blfItems = $items(\"Generate BLF XML\");\n  if (blfItems && blfItems.length > 0 && blfItems[0].json.blfXmlGenerated) {\n    blfXmlGenerated = blfItems[0].json.blfXmlGenerated;\n    console.log(`✅ BLF récupéré depuis Generate BLF XML (${blfXmlGenerated.length} caractères)`);\n  } else {\n    console.warn('⚠️  BLF non trouvé dans Generate BLF XML, utilisation valeur par défaut');\n  }\n} catch (error) {\n  console.error('❌ Erreur récupération BLF:', error.message);\n}\n\n// PhoneSettings XML (constant pour tous)\nconst phoneSettingsXml = '<PhoneDevice ProvType=\"0\" Secret=\"\" PhoneLanguage=\"French\" XferType=\"BXfer\" RingTone=\"Ring 1\" QueueRingTone=\"Ring 6\" DateFormat=\"DD MMM YYYY (15 Jan 2017)\" TimeFormat=\"24-hour clock\" PowerLed=\"Both (Voicemail and Missed calls)\" Backlight=\"15 seconds\" ScreenSaver=\"15 seconds\"><CustomQueueRingTones /><mcgroups enabled=\"false\" /><DynamicOptions><option name=\"vlanwanport\" value=\"False\" /><option name=\"vlanwanid\" value=\"1\" /><option name=\"vlanwanpriority\" value=\"0\" /><option name=\"vlanpcport\" value=\"False\" /><option name=\"vlanpcid\" value=\"1\" /><option name=\"vlanpcpriority\" value=\"0\" /></DynamicOptions><LldpOptions><option name=\"lldpvalue\" value=\"True\" /></LldpOptions><CodecsPriority><Codec Priority=\"1\" PriorityVarName=\"codec1\" DisplayText=\"PCMU\" PayloadTypeName=\"payload1\" payload=\"PCMU\">0</Codec><Codec Priority=\"2\" PriorityVarName=\"codec2\" DisplayText=\"PCMA\" PayloadTypeName=\"payload2\" payload=\"PCMA\">8</Codec><Codec Priority=\"3\" PriorityVarName=\"codec3\" DisplayText=\"G722\" PayloadTypeName=\"payload3\" payload=\"G722\">9</Codec><Codec Priority=\"4\" PriorityVarName=\"codec4\" DisplayText=\"G729\" PayloadTypeName=\"payload4\" payload=\"G729\">18</Codec></CodecsPriority><BLFS /></PhoneDevice>';\n\n// Colonnes constantes (même valeur pour tous les utilisateurs)\nconst CONSTANT_COLUMNS = {\n  \"Template\": \"yealinkT4x.ph.xml\",\n  \"Language\": \"French\",\n  \"MobileNumber\": \"\",\n  \"ClickToCallAuth\": \"\",\n  \"WMApprove\": \"\",\n  \"Ringtone\": \"Ring1.wav\",\n  \"QRingtone\": \"Ring6.wav\",\n  \"VMEnable\": \"1\",\n  \"VMLanguage\": \"0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\",\n  \"VMPlayMsgDateTime\": \"0\",\n  \"VMEmailOptions\": \"1\",\n  \"VMNoPin\": \"1\",\n  \"VMPlayCallerID\": \"0\",\n  \"RecordCalls\": \"0\",\n  \"RecordExternal\": \"\",\n  \"RecordCanSee\": \"0\",\n  \"RecordCanDelete\": \"0\",\n  \"RecordStartStop\": \"\",\n  \"RecordNotify\": \"0\",\n  \"Disabled\": \"0\",\n  \"HideFWrules\": \"0\",\n  \"DisableExternalCalls\": \"0\",\n  \"HideInPhonebook\": \"0\",\n  \"CallScreening\": \"0\",\n  \"PinProtected\": \"\",\n  \"PinTimeout\": \"0\",\n  \"Transcription\": \"\",\n  \"AllowLanOnly\": \"1\",\n  \"SIPID\": \"\",\n  \"DeliverAudio\": \"0\",\n  \"HotDesk\": \"0\",\n  \"SRTPMode\": \"0\",\n  \"EmailMissedCalls\": \"0\",\n  \"MS365SignInDisabled\": \"\",\n  \"MS365CalendarDisabled\": \"\",\n  \"MS365ContactsDisabled\": \"\",\n  \"MS365TeamsDisabled\": \"0\",\n  \"GoogleSignInDisabled\": \"\",\n  \"GoogleContactsDisabled\": \"\",\n  \"GoogleCalendarDisabled\": \"\",\n  \"BLF\": blfXmlGenerated,  // ✅ BLF DYNAMIQUE\n  \"PhoneSettings\": phoneSettingsXml\n};\n\n// Récupérer les items utilisateur de l'input actuel\nconst userItems = $input.all();\n\n// Ajouter les colonnes constantes à chaque item utilisateur\nconst enrichedItems = userItems.map(item => ({\n  json: {\n    ...item.json,\n    ...CONSTANT_COLUMNS\n  }\n}));\n\nconsole.log(`✅ ${enrichedItems.length} items enrichis avec colonnes constantes + BLF + PhoneSettings`);\n\nreturn enrichedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        1536
+      ],
+      "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
+      "name": "Add PhoneSettings"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "3cx_import.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        1536
+      ],
+      "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {
+    "📊 Parse OCR": [
+      {
+        "json": {
+          "filename": "image1",
+          "model": "SIP-T34W",
+          "serial": "201037G090017561",
+          "mac": "44DBD27E6509"
+        }
+      },
+      {
+        "json": {
+          "filename": "image1",
+          "model": "SIP-T34W",
+          "serial": "201037G090017101",
+          "mac": "44DBD27E63DD"
+        }
+      }
+    ],
+    "Extract dtx": [
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Nom client ",
+          "DTM52690": "OVE CARAIBES ITEP",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "N° de Licence",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Multi tenants : ",
+          "DTM52690": "NON",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Mis à jour le :",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "Lieu (commune ou autre site)",
+          "DT": "Nom",
+          "DTM52690": "Prénom",
+          "__EMPTY_1": "Extension",
+          "__EMPTY_2": "SDA / Appels entrants",
+          "__EMPTY_3": "Affichage Appels sortants",
+          "__EMPTY_4": "Modèle de téléphone",
+          "__EMPTY_5": "Casque",
+          "__EMPTY_6": "Softphone",
+          "__EMPTY_7": "email",
+          "À compléter : par Dauphin Télécom": "MAC",
+          "__EMPTY_8": "SN",
+          "__EMPTY_9": "ROUTER"
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "DUCOS",
+          "DT": "Accueil",
+          "DTM52690": "",
+          "__EMPTY_1": 2001,
+          "__EMPTY_2": "0596 42 12 01",
+          "__EMPTY_3": "0596 42 12 01",
+          "__EMPTY_4": "T54",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "oui",
+          "__EMPTY_7": "service.informatique@ove-caraibes.com",
+          "À compléter : par Dauphin Télécom": "44DBD2B367BE",
+          "__EMPTY_8": "201081G120026448",
+          "__EMPTY_9": "44DBD2B367BE"
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Infirmier",
+          "DTM52690": "",
+          "__EMPTY_1": 2002,
+          "__EMPTY_2": "0596 65 50 03",
+          "__EMPTY_3": "0596 42 12 01",
+          "__EMPTY_4": "T34",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "service.informatique@ove-caraibes.com",
+          "À compléter : par Dauphin Télécom": "44DBD288F416",
+          "__EMPTY_8": "201037G100002167",
+          "__EMPTY_9": "44DBD2B367BE"
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Educateur",
+          "DTM52690": "",
+          "__EMPTY_1": 2003,
+          "__EMPTY_2": "A CRÉER",
+          "__EMPTY_3": "0596 42 12 01",
+          "__EMPTY_4": "T34",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "oui",
+          "__EMPTY_7": "service.informatique@ove-caraibes.com",
+          "À compléter : par Dauphin Télécom": "44DBD281B29D",
+          "__EMPTY_8": "201037G090029363",
+          "__EMPTY_9": "44DBD2B367BE"
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "SESSAS CONVERGENCE",
+          "DTM52690": "",
+          "__EMPTY_1": 2004,
+          "__EMPTY_2": "0596 69 10 70",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "service.informatique@ove-caraibes.com",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "*Scénarios d'appels :",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "*(Définition des agents ou groupes destinataires des appels, ordre de sonnerie, plages horaires de réception, messagerie vocale et répondeur numérique)",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "ELEMENTS  COMPLEMENTAIRES",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Message audio : ",
+          "DTM52690": "non",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Fourni par : ",
+          "DTM52690": "Dauphin",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "Groupe d'appels :",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "File d'attente :",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      },
+      {
+        "json": {
+          "__EMPTY": "",
+          "DT": "SVI (IVR) :",
+          "DTM52690": "",
+          "__EMPTY_1": "",
+          "__EMPTY_2": "",
+          "__EMPTY_3": "",
+          "__EMPTY_4": "",
+          "__EMPTY_5": "",
+          "__EMPTY_6": "",
+          "__EMPTY_7": "",
+          "À compléter : par Dauphin Télécom": "",
+          "__EMPTY_8": "",
+          "__EMPTY_9": ""
+        }
+      }
+    ]
+  },
+  "connections": {
+    "📁 Get Photos": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download Photos": {
+      "main": [
+        [
+          {
+            "node": "🔍 OCR Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 OCR Analysis": {
+      "main": [
+        [
+          {
+            "node": "📊 Parse OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Parse OCR": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Save Final CSV": {
+      "main": [
+        [
+          {
+            "node": "✅ Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "📋 Get DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "💾 Save Final CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract dtx": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Generate BLF XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Get DTX": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download DTX": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YMCS Format": {
+      "main": [
+        [
+          {
+            "node": "Convert File & Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XLSX YMCS": {
+      "main": [
+        [
+          {
+            "node": "YMCS Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert File & Download": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Add PhoneSettings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CSV 3CX",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Call 'Telegram Notification Service'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Telegram Notification Service'1": {
+      "main": [
+        []
+      ]
+    },
+    "Generate BLF XML": {
+      "main": [
+        [
+          {
+            "node": "CSV 3CX",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "XLSX YMCS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV 3CX": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add PhoneSettings": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "versionId": "49b50ede-6ed2-4819-bf0c-3f866115483c",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "ASuCRojKT2UkXOpa",
+  "tags": [
+    {
+      "updatedAt": "2025-09-03T14:07:52.287Z",
+      "createdAt": "2025-09-03T14:07:52.287Z",
+      "id": "LcPpxlqlWWESEENe",
+      "name": "3CX Import"
+    },
+    {
+      "updatedAt": "2025-09-03T14:49:42.560Z",
+      "createdAt": "2025-09-03T14:49:42.560Z",
+      "id": "laZOvtAOZQrv1Pfd",
+      "name": "Google Drive"
+    },
+    {
+      "updatedAt": "2025-09-03T14:07:52.791Z",
+      "createdAt": "2025-09-03T14:07:52.791Z",
+      "id": "m4n7QTlGpD5nJspr",
+      "name": "OpenAI"
+    }
+  ]
+}
