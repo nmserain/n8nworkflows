@@ -6,7 +6,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -1504,
+        -3008,
         1340
       ],
       "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
@@ -22,7 +22,7 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        -832,
+        -2336,
         1436
       ],
       "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
@@ -37,7 +37,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -608,
+        -2112,
         1436
       ],
       "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
@@ -62,7 +62,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -1280,
+        -2784,
         1340
       ],
       "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
@@ -87,7 +87,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -1056,
+        -2560,
         1340
       ],
       "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
@@ -106,7 +106,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        544,
+        -736,
         1312
       ],
       "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
@@ -117,7 +117,7 @@
         "operation": "xlsx",
         "options": {
           "compression": true,
-          "fileName": "=import_ymcs.xlsx",
+          "fileName": "=3cx_import_{{ $(\"Extract Client Name\").first().json.clientName }}.xlsx",
           "headerRow": true,
           "sheetName": "devices_template"
         }
@@ -125,7 +125,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        768,
+        -512,
         1312
       ],
       "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
@@ -142,7 +142,7 @@
         "messages": {
           "values": [
             {
-              "content": "=Voici les données du fichier Excel DTX en format JSON :\n  {{ JSON.stringify($json.data) }}\n\n\nPrompt Compact : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : mtq-3cx-{nomclient}-1\n   - Ex: mtq-3cx-eem-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"mtq-3cx-eem-1\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\n",
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n**IMPORTANT - Nom du client détecté** :\nNom du client : {{ $json.clientName }}\nCode site à utiliser : {{ $json.siteCode }}\n\n : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : {{ $json.siteCode }}\n   - Format : mtq-3cx-[nom-client]-1\n   - Exemple : mtq-3cx-ovecaraibes-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"{{ $json.siteCode }}\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\n",
               "role": "assistant"
             }
           ]
@@ -152,7 +152,7 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        192,
+        -1088,
         1312
       ],
       "id": "98f5923f-e4af-4fd3-83a6-1bf4971d5b50",
@@ -176,7 +176,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1056,
+        -2560,
         1532
       ],
       "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
@@ -190,7 +190,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        1440,
+        160,
         1436
       ],
       "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
@@ -201,7 +201,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        992,
+        -288,
         1436
       ],
       "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
@@ -221,7 +221,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -88,
+        -1368,
         1784
       ],
       "id": "e434ca5b-6b8d-4856-9349-7539893fc62e",
@@ -251,24 +251,11 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2000,
-        1440
+        608,
+        1436
       ],
       "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
       "name": "Call 'Telegram Notification Service'1"
-    },
-    {
-      "parameters": {
-        "jsCode": "const workflowName = $workflow.name;\nconst startTime = new Date($execution.startedAt).getTime();\nconst endTime = Date.now();\nconst executionTime = ((endTime - startTime) / 1000).toFixed(2);\n\nreturn [{\n  json: {\n    notificationType: 'success',\n    workflowName: workflowName,\n    status: 'success',\n    message: 'Workflow terminé avec succès',\n    executionTime: executionTime,\n    chatId: '5992469226'\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1776,
-        1440
-      ],
-      "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
-      "name": "Code in JavaScript2"
     },
     {
       "parameters": {
@@ -277,7 +264,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -384,
+        -1664,
         1436
       ],
       "id": "e2a3a9f3-6f09-4171-ba1d-ae90ed041c4a",
@@ -286,13 +273,13 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Voici les données du fichier Excel DTX en format JSON :\n{{ JSON.stringify($json.data) }}\n\n# Prompt de conversion DTX → CSV 3CX (COLONNES MINIMALES)\n\n## Mission\nExtraire les données VARIABLES de chaque utilisateur du fichier DTX.\nLes colonnes constantes seront ajoutées automatiquement par le système.\n\n## Colonnes à générer (SEULEMENT 13 colonnes)\n\n**Column 1: Number** - Extension (ex: 2001, 2002)\n**Column 2: FirstName** - Nom/Service (ex: \"Accueil\", \"Infirmier\")\n**Column 3: LastName** - Prénom (souvent vide, utiliser \"\")\n**Column 4: EmailAddress** - Email de l'utilisateur\n**Column 5: DID** - SDA avec préfixe 596 (ex: 596596421201)\n**Column 6: OutboundCallerID** - Numéro sortant (ex: 0596421201)\n**Column 7: MAC** - Adresse MAC 12 caractères MAJUSCULES sans tirets (ex: 44DBD2B367BE)\n**Column 8: Router** - MAC du routeur (même valeur que MAC si c'est le routeur, sinon MAC du premier téléphone)\n**Column 9: Model** - Modèle téléphone (ex: \"Yealink T54W\", \"Yealink T34W\", \"Yealink T33G\")\n**Column 10: WebMeetingFriendlyName** - Nom meeting : nom en minuscules + 4 chiffres aléatoires (ex: \"accueil2001\"). la somme des caractères doit être inférieur à 10\n**Column 11: VMPIN** - PIN messagerie : 4 chiffres aléatoires (ex: \"3714\")\n**Column 12: Role** - Toujours : <role name=\"users\" />\n**Column 13: Department** - Toujours : DEFAULT\n\n## Extraction des données du JSON\n\nLe JSON contient :\n- Première ligne (index 0) = headers (ignorer)\n- Lignes suivantes = données utilisateurs\n\nChamps DTX à utiliser :\n- `__EMPTY_1` = Extension (Number)\n- `DT` = Nom (FirstName)\n- `DTM52690` = Prénom (LastName, souvent vide)\n- `__EMPTY_7` = Email (EmailAddress)\n- `__EMPTY_2` = SDA (pour DID - ajouter préfixe 596)\n- `__EMPTY_3` = Numéro sortant (OutboundCallerID)\n- `À compléter : par Dauphin Télécom` = MAC\n- `__EMPTY_9` = Router MAC\n- `__EMPTY_4` = Modèle (Model)\n\n## Règles de transformation\n\n1. **Extension >= 2000** : Ne traiter que les lignes avec Extension >= 2000\n2. **MAC** : Nettoyer (enlever tirets/espaces), 12 caractères MAJUSCULES\n3. **DID** : Ajouter préfixe \"596\" au SDA (ex: 0596421201 → 5960596421201)\n4. **Model** : Mapper les modèles\n   - \"T54\" ou \"SIP-T54\" → \"Yealink T54W\"\n   - \"T34\" ou \"SIP-T34\" → \"Yealink T34W\"\n   - \"T31G\" → \"Yealink T33G\"\n5. **WebMeetingFriendlyName** : Nom en minuscules + 4 chiffres (ex: \"accueil2001\")\n6. **VMPIN** : Générer 4 chiffres aléatoires\n7. **Role** : Toujours `<role name=\"users\" />`\n8. **Department** : Toujours \"DEFAULT\"\n\n## Format de sortie\n\nCSV avec EXACTEMENT 13 colonnes, séparées par des virgules.\nPremière ligne = headers (obligatoire)\nLignes suivantes = données\n\n**IMPORTANT** :\n- Entourer de guillemets doubles les valeurs contenant : virgules, < >, espaces multiples\n- Champs vides = deux virgules consécutives (,,) ou guillemets vides (\"\")\n- NE PAS ajouter de ligne \"# TOTAL_LIGNES\"\n- Retourner UNIQUEMENT le CSV brut, pas de markdown (```csv)\n\n## Exemple de sortie\n\n```\nNumber,FirstName,LastName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN,Role,Department\n2001,Accueil,,service.informatique@ove-caraibes.com,5960596421201,0596421201,44DBD2B367BE,44DBD2B367BE,Yealink T54W,accueil2001,3714,\"<role name=\"\"users\"\" />\",DEFAULT\n2002,Infirmier,,service.informatique@ove-caraibes.com,5960596655003,0596421201,44DBD288F416,44DBD2B367BE,Yealink T34W,infirmier2002,6802,\"<role name=\"\"users\"\" />\",DEFAULT\n```\n\n⚠️ **RÈGLES CRITIQUES** :\n1. Toutes les lignes doivent avoir EXACTEMENT 13 colonnes\n2. Pas de ligne de commentaire ou de contrôle\n3. Retourner UNIQUEMENT le CSV (pas de texte explicatif ni de ```\\n)\n",
+        "text": "=Voici les données du fichier Excel DTX en format JSON :\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n# Prompt de conversion DTX → CSV 3CX (COLONNES MINIMALES)\n\n## Mission\nExtraire les données VARIABLES de chaque utilisateur du fichier DTX.\nLes colonnes constantes seront ajoutées automatiquement par le système.\n\n## Colonnes à générer (SEULEMENT 11 colonnes)\n\n**Column 1: Number** - Extension (ex: 2001, 2002)\n**Column 2: FirstName** - Nom/Service (ex: \"Accueil\", \"Infirmier\")\n**Column 3: LastName** - Prénom (souvent vide, utiliser \"\")\n**Column 4: EmailAddress** - Email de l'utilisateur\n**Column 5: DID** - SDA avec préfixe 596 (ex: 596596421201)\n**Column 6: OutboundCallerID** - Numéro sortant (ex: 0596421201)\n**Column 7: MAC** - Adresse MAC 12 caractères MAJUSCULES sans tirets (ex: 44DBD2B367BE)\n**Column 8: Router** - MAC du routeur (même valeur que MAC si c'est le routeur, sinon MAC du premier téléphone)\n**Column 9: Model** - Modèle téléphone (ex: \"Yealink T54W\", \"Yealink T34W\", \"Yealink T33G\")\n**Column 10: WebMeetingFriendlyName** - Nom meeting : nom en minuscules + 4 chiffres aléatoires (ex: \"accueil2001\"). la somme des caractères doit être inférieur à 10\n**Column 11: VMPIN** - PIN messagerie : 4 chiffres aléatoires (ex: \"3714\")\n\n\n## Extraction des données du JSON\n\nLe JSON contient :\n- Première ligne (index 0) = headers (ignorer)\n- Lignes suivantes = données utilisateurs\n\nChamps DTX à utiliser :\n- `__EMPTY_1` = Extension (Number)\n- `DT` = Nom (FirstName)\n- `DTM52690` = Prénom (LastName, souvent vide)\n- `__EMPTY_7` = Email (EmailAddress)\n- `__EMPTY_2` = SDA (pour DID - ajouter préfixe 596)\n- `__EMPTY_3` = Numéro sortant (OutboundCallerID)\n- `À compléter : par Dauphin Télécom` = MAC\n- `__EMPTY_9` = Router MAC\n- `__EMPTY_4` = Modèle (Model)\n\n## Règles de transformation\n\n1. **Extension >= 2000** : Ne traiter que les lignes avec Extension >= 2000\n2. **MAC** : Nettoyer (enlever tirets/espaces), 12 caractères MAJUSCULES\n3. **DID** : Ajouter préfixe \"596\" au SDA (ex: 0596421201 → 5960596421201)\n4. **Model** : Mapper les modèles\n   - \"T54\" ou \"SIP-T54\" → \"Yealink T54W\"\n   - \"T34\" ou \"SIP-T34\" → \"Yealink T34W\"\n   - \"T31G\" → \"Yealink T33G\"\n5. **WebMeetingFriendlyName** : Nom en minuscules + 4 chiffres (ex: \"accueil2001\")\n6. **VMPIN** : Générer 4 chiffres aléatoires\n7. **Role** : Toujours `<role name=\"users\" />`\n8. **Department** : Toujours \"DEFAULT\"\n\n## Format de sortie\n\nCSV avec EXACTEMENT 11 colonnes, séparées par des virgules.\n\n**IMPORTANT** : Les colonnes Role et Department seront ajoutées automatiquement par le système, ne les génère PAS.\n\nPremière ligne = headers (obligatoire)\nLignes suivantes = données\n\n**IMPORTANT** :\n- Entourer de guillemets doubles les valeurs contenant : virgules, < >, espaces multiples\n- Champs vides = deux virgules consécutives (,,) ou guillemets vides (\"\")\n- NE PAS ajouter de ligne \"# TOTAL_LIGNES\"\n- Retourner UNIQUEMENT le CSV brut, pas de markdown (```csv)\n\n## Exemple de sortie\n\n```\nNumber,FirstName,LastName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN,Role,Department\n2001,Accueil,,service.informatique@ove-caraibes.com,5960596421201,0596421201,44DBD2B367BE,44DBD2B367BE,Yealink T54W,accueil2001,3714,\"<role name=\"\"users\"\" />\",DEFAULT\n2002,Infirmier,,service.informatique@ove-caraibes.com,5960596655003,0596421201,44DBD288F416,44DBD2B367BE,Yealink T34W,infirmier2002,6802,\"<role name=\"\"users\"\" />\",DEFAULT\n```\n\n⚠️ **RÈGLES CRITIQUES** :\n1. Toutes les lignes doivent avoir EXACTEMENT 11 colonnes\n2. Pas de ligne de commentaire ou de contrôle\n3. Retourner UNIQUEMENT le CSV (pas de texte explicatif ni de ```\\n)\n",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        -160,
+        -1440,
         1560
       ],
       "id": "6323d640-29d4-4a36-89a6-bcccd56eecdd",
@@ -300,27 +287,14 @@
     },
     {
       "parameters": {
-        "jsCode": "// ============================================\n// AJOUT DES COLONNES CONSTANTES\n// Version finale avec récupération BLF via $items()\n// ============================================\n\n// Récupérer le BLF XML généré par le nœud \"Generate BLF XML\"\nlet blfXmlGenerated = \"<PhoneDevice><BLFS/></PhoneDevice>\"; // Valeur par défaut\n\ntry {\n  // Récupérer les items du nœud \"Generate BLF XML\"\n  const blfItems = $items(\"Generate BLF XML\");\n  if (blfItems && blfItems.length > 0 && blfItems[0].json.blfXmlGenerated) {\n    blfXmlGenerated = blfItems[0].json.blfXmlGenerated;\n    console.log(`✅ BLF récupéré depuis Generate BLF XML (${blfXmlGenerated.length} caractères)`);\n  } else {\n    console.warn('⚠️  BLF non trouvé dans Generate BLF XML, utilisation valeur par défaut');\n  }\n} catch (error) {\n  console.error('❌ Erreur récupération BLF:', error.message);\n}\n\n// PhoneSettings XML (constant pour tous)\nconst phoneSettingsXml = '<PhoneDevice ProvType=\"0\" Secret=\"\" PhoneLanguage=\"French\" XferType=\"BXfer\" RingTone=\"Ring 1\" QueueRingTone=\"Ring 6\" DateFormat=\"DD MMM YYYY (15 Jan 2017)\" TimeFormat=\"24-hour clock\" PowerLed=\"Both (Voicemail and Missed calls)\" Backlight=\"15 seconds\" ScreenSaver=\"15 seconds\"><CustomQueueRingTones /><mcgroups enabled=\"false\" /><DynamicOptions><option name=\"vlanwanport\" value=\"False\" /><option name=\"vlanwanid\" value=\"1\" /><option name=\"vlanwanpriority\" value=\"0\" /><option name=\"vlanpcport\" value=\"False\" /><option name=\"vlanpcid\" value=\"1\" /><option name=\"vlanpcpriority\" value=\"0\" /></DynamicOptions><LldpOptions><option name=\"lldpvalue\" value=\"True\" /></LldpOptions><CodecsPriority><Codec Priority=\"1\" PriorityVarName=\"codec1\" DisplayText=\"PCMU\" PayloadTypeName=\"payload1\" payload=\"PCMU\">0</Codec><Codec Priority=\"2\" PriorityVarName=\"codec2\" DisplayText=\"PCMA\" PayloadTypeName=\"payload2\" payload=\"PCMA\">8</Codec><Codec Priority=\"3\" PriorityVarName=\"codec3\" DisplayText=\"G722\" PayloadTypeName=\"payload3\" payload=\"G722\">9</Codec><Codec Priority=\"4\" PriorityVarName=\"codec4\" DisplayText=\"G729\" PayloadTypeName=\"payload4\" payload=\"G729\">18</Codec></CodecsPriority><BLFS /></PhoneDevice>';\n\n// Colonnes constantes (même valeur pour tous les utilisateurs)\nconst CONSTANT_COLUMNS = {\n  \"Template\": \"yealinkT4x.ph.xml\",\n  \"Language\": \"French\",\n  \"MobileNumber\": \"\",\n  \"ClickToCallAuth\": \"\",\n  \"WMApprove\": \"\",\n  \"Ringtone\": \"Ring1.wav\",\n  \"QRingtone\": \"Ring6.wav\",\n  \"VMEnable\": \"1\",\n  \"VMLanguage\": \"0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\",\n  \"VMPlayMsgDateTime\": \"0\",\n  \"VMEmailOptions\": \"1\",\n  \"VMNoPin\": \"1\",\n  \"VMPlayCallerID\": \"0\",\n  \"RecordCalls\": \"0\",\n  \"RecordExternal\": \"\",\n  \"RecordCanSee\": \"0\",\n  \"RecordCanDelete\": \"0\",\n  \"RecordStartStop\": \"\",\n  \"RecordNotify\": \"0\",\n  \"Disabled\": \"0\",\n  \"HideFWrules\": \"0\",\n  \"DisableExternalCalls\": \"0\",\n  \"HideInPhonebook\": \"0\",\n  \"CallScreening\": \"0\",\n  \"PinProtected\": \"\",\n  \"PinTimeout\": \"0\",\n  \"Transcription\": \"\",\n  \"AllowLanOnly\": \"1\",\n  \"SIPID\": \"\",\n  \"DeliverAudio\": \"0\",\n  \"HotDesk\": \"0\",\n  \"SRTPMode\": \"0\",\n  \"EmailMissedCalls\": \"0\",\n  \"MS365SignInDisabled\": \"\",\n  \"MS365CalendarDisabled\": \"\",\n  \"MS365ContactsDisabled\": \"\",\n  \"MS365TeamsDisabled\": \"0\",\n  \"GoogleSignInDisabled\": \"\",\n  \"GoogleContactsDisabled\": \"\",\n  \"GoogleCalendarDisabled\": \"\",\n  \"BLF\": blfXmlGenerated,  // ✅ BLF DYNAMIQUE\n  \"PhoneSettings\": phoneSettingsXml\n};\n\n// Récupérer les items utilisateur de l'input actuel\nconst userItems = $input.all();\n\n// Ajouter les colonnes constantes à chaque item utilisateur\nconst enrichedItems = userItems.map(item => ({\n  json: {\n    ...item.json,\n    ...CONSTANT_COLUMNS\n  }\n}));\n\nconsole.log(`✅ ${enrichedItems.length} items enrichis avec colonnes constantes + BLF + PhoneSettings`);\n\nreturn enrichedItems;\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        544,
-        1560
-      ],
-      "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
-      "name": "Add PhoneSettings"
-    },
-    {
-      "parameters": {
         "options": {
-          "fileName": "3cx_import.csv"
+          "fileName": "=3cx_import_{{ $('Extract Client Name').item.json.clientName }}.csv"
         }
       },
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        768,
+        -512,
         1560
       ],
       "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
@@ -328,31 +302,31 @@
     },
     {
       "parameters": {
-        "content": "## Réception  du DTX\nVia google drive ou par webhook \nextraction des données ",
-        "height": 496,
+        "content": "## 📥 RÉCEPTION DU FICHIER DTX\n\n**Sources** :\n- Google Drive (mode manuel/test)\n- Webhook HTTP (mode production)\n\n**Format** : Fichier Excel (.xlsx)\n\n**Extraction** : Conversion Excel → JSON avec toutes les feuilles\n",
+        "height": 560,
         "width": 704
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1584,
-        1196
+        -3120,
+        1104
       ],
       "id": "3897658d-7f5b-47e4-985c-caccb9cbbaa4",
       "name": "Sticky Note"
     },
     {
       "parameters": {
-        "content": "## Traitement IA pour généré les fichier d'imports\n\n- YMCS\n\n- 3CX\n une partie du fichier d'import ets généré par l'ia, et le reste est complété via code\n",
-        "height": 816,
+        "content": "## 🤖 GÉNÉRATION BLF + FICHIERS D'IMPORT\n\n**Étape 1 - Generate BLF XML** :\n- Extrait toutes les extensions du DTX\n- Génère XML BLF dynamique (max 18 extensions)\n- Stocke dans `blfXmlGenerated`\n\n**Étape 2 - Fichier YMCS** :\n- IA génère JSON structuré\n- Format YMCS pour gestion téléphones\n- Conversion → Excel (.xlsx)\n\n**Étape 3 - Fichier 3CX** :\n- IA génère 13 colonnes variables (Number, FirstName, MAC, etc.)\n- Parse CSV → JSON\n- Add Constant Columns ajoute 42 colonnes + BLF + PhoneSettings\n- Total : 55 colonnes",
+        "height": 992,
         "width": 1280,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -176,
-        1112
+        -1456,
+        936
       ],
       "id": "70cc28b8-dfa7-4c30-92dc-c1c0a5cbe570",
       "name": "Sticky Note1"
@@ -364,7 +338,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
+        -1024,
         1560
       ],
       "id": "e60759b1-ead0-4260-af48-3e441ce369c9",
@@ -377,7 +351,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1216,
+        -64,
         1436
       ],
       "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
@@ -385,48 +359,88 @@
     },
     {
       "parameters": {
-        "content": "## Send back files via webhook \nfiles are converted to base64",
-        "height": 288,
+        "content": "## 📤 ENVOI DES FICHIERS\n\n**Conversion Base64** :\n- CSV 3CX → Base64\n- Excel YMCS → Base64\n\n**Réponse Webhook** :\n- JSON avec 2 fichiers encodés\n- Timestamp\n- Status success\n\n**Format** :\n{\n  \"success\": true,\n  \"files\": {\n    \"csv_3cx\": { \"filename\": \"...\", \"data\": \"...\" },\n    \"xlsx_ymcs\": { \"filename\": \"...\", \"data\": \"...\" }\n  }\n}\n",
+        "height": 592,
         "width": 480
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1136,
-        1308
+        -144,
+        1004
       ],
       "id": "42f626ad-a923-4c58-bd11-fef8987eb1ab",
       "name": "Sticky Note2"
     },
     {
       "parameters": {
-        "content": "## Notification Telegram\n",
-        "height": 224,
-        "width": 384
+        "content": "## 📬 NOTIFICATION TELEGRAM\n\n**Envoi** : Après réponse webhook réussie\n\n**Contenu** :\n- Nom du workflow\n- Status : success\n- Temps d'exécution\n- Timestamp\n\n**Service** : Workflow dédié \"Telegram Notification Service\"\n",
+        "height": 448,
+        "width": 384,
+        "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1744,
-        1376
+        352,
+        1148
       ],
       "id": "fb29806a-40b7-431e-8345-d72b4f72b606",
       "name": "Sticky Note3"
     },
     {
       "parameters": {
-        "content": "## Extractions des données DTX \n",
-        "height": 256,
-        "width": 608
+        "content": "  ## 🔄 AGRÉGATION DES DONNÉES\n  **Aggregate** :\n  - Regroupe tous les items Excel en un seul objet\n  - Entrée : Multiple items (une par feuille Excel)\n  - Sortie : Un seul item avec toutes les données\n\n  **📛 Extract Client Name** :\n  - Extrait le nom du client depuis les données DTX\n  - Nettoie le nom : minuscules, sans accents\n  - Espaces → tirets (ex: \"OVE CARAIBES\" → \"ove-caraibes\")\n  - Génère clientName et siteCode (mtq-3cx-[client]-1)\n\n  **Nécessaire pour** :\n  - Permettre aux agents IA d'accéder à toutes les données\n  - Générer des noms de fichiers et codes site dynamiques",
+        "height": 512,
+        "width": 800
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -864,
-        1340
+        -2352,
+        1072
       ],
       "id": "86c32899-55d9-4d6e-8e6b-c3d77a2e7c08",
       "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// AJOUT DES COLONNES CONSTANTES\n// Version finale avec récupération BLF via $items()\n// ============================================\n\n// Récupérer le BLF XML généré par le nœud \"Generate BLF XML\"\nlet blfXmlGenerated = \"<PhoneDevice><BLFS/></PhoneDevice>\"; // Valeur par défaut\n\ntry {\n  // Récupérer les items du nœud \"Generate BLF XML\"\n  const blfItems = $items(\"Generate BLF XML1\");\n  if (blfItems && blfItems.length > 0 && blfItems[0].json.blfXmlGenerated) {\n    blfXmlGenerated = blfItems[0].json.blfXmlGenerated;\n    console.log(`✅ BLF récupéré depuis Generate BLF XML (${blfXmlGenerated.length} caractères)`);\n  } else {\n    console.warn('⚠️  BLF non trouvé dans Generate BLF XML, utilisation valeur par défaut');\n  }\n} catch (error) {\n  console.error('❌ Erreur récupération BLF:', error.message);\n}\n\n// PhoneSettings XML (constant pour tous)\nconst phoneSettingsXml = '<PhoneDevice ProvType=\"0\" Secret=\"\" PhoneLanguage=\"French\" XferType=\"BXfer\" RingTone=\"Ring 1\" QueueRingTone=\"Ring 6\" DateFormat=\"DD MMM YYYY (15 Jan 2017)\" TimeFormat=\"24-hour clock\" PowerLed=\"Both (Voicemail and Missed calls)\" Backlight=\"15 seconds\" ScreenSaver=\"15 seconds\"><CustomQueueRingTones /><mcgroups enabled=\"false\" /><DynamicOptions><option name=\"vlanwanport\" value=\"False\" /><option name=\"vlanwanid\" value=\"1\" /><option name=\"vlanwanpriority\" value=\"0\" /><option name=\"vlanpcport\" value=\"False\" /><option name=\"vlanpcid\" value=\"1\" /><option name=\"vlanpcpriority\" value=\"0\" /></DynamicOptions><LldpOptions><option name=\"lldpvalue\" value=\"True\" /></LldpOptions><CodecsPriority><Codec Priority=\"1\" PriorityVarName=\"codec1\" DisplayText=\"PCMU\" PayloadTypeName=\"payload1\" payload=\"PCMU\">0</Codec><Codec Priority=\"2\" PriorityVarName=\"codec2\" DisplayText=\"PCMA\" PayloadTypeName=\"payload2\" payload=\"PCMA\">8</Codec><Codec Priority=\"3\" PriorityVarName=\"codec3\" DisplayText=\"G722\" PayloadTypeName=\"payload3\" payload=\"G722\">9</Codec><Codec Priority=\"4\" PriorityVarName=\"codec4\" DisplayText=\"G729\" PayloadTypeName=\"payload4\" payload=\"G729\">18</Codec></CodecsPriority><BLFS /></PhoneDevice>';\n\n// Colonnes constantes (même valeur pour tous les utilisateurs)\nconst CONSTANT_COLUMNS = {\n  \"Template\": \"yealinkT4x.ph.xml\",\n  \"Language\": \"French\",\n  \"MobileNumber\": \"\",\n  \"ClickToCallAuth\": \"\",\n  \"WMApprove\": \"\",\n  \"Ringtone\": \"Ring1.wav\",\n  \"QRingtone\": \"Ring6.wav\",\n  \"VMEnable\": \"1\",\n  \"VMLanguage\": \"0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\",\n  \"VMPlayMsgDateTime\": \"0\",\n  \"VMEmailOptions\": \"1\",\n  \"VMNoPin\": \"1\",\n  \"VMPlayCallerID\": \"0\",\n  \"RecordCalls\": \"0\",\n  \"RecordExternal\": \"\",\n  \"RecordCanSee\": \"0\",\n  \"RecordCanDelete\": \"0\",\n  \"RecordStartStop\": \"\",\n  \"RecordNotify\": \"0\",\n  \"Disabled\": \"0\",\n  \"HideFWrules\": \"0\",\n  \"DisableExternalCalls\": \"0\",\n  \"HideInPhonebook\": \"0\",\n  \"CallScreening\": \"0\",\n  \"PinProtected\": \"\",\n  \"PinTimeout\": \"0\",\n  \"Transcription\": \"\",\n  \"AllowLanOnly\": \"1\",\n  \"SIPID\": \"\",\n  \"DeliverAudio\": \"0\",\n  \"HotDesk\": \"0\",\n  \"SRTPMode\": \"0\",\n  \"EmailMissedCalls\": \"0\",\n  \"MS365SignInDisabled\": \"\",\n  \"MS365CalendarDisabled\": \"\",\n  \"MS365ContactsDisabled\": \"\",\n  \"MS365TeamsDisabled\": \"0\",\n  \"GoogleSignInDisabled\": \"\",\n  \"GoogleContactsDisabled\": \"\",\n  \"GoogleCalendarDisabled\": \"\",\n  \"Role\": '<role name=\"users\" />',\n  \"Department\": \"DEFAULT\",\n  \"BLF\": blfXmlGenerated,  // ✅ BLF DYNAMIQUE\n  \"PhoneSettings\": phoneSettingsXml\n};\n\n// Récupérer les items utilisateur de l'input actuel\nconst userItems = $input.all();\n\n// Ajouter les colonnes constantes à chaque item utilisateur\nconst enrichedItems = userItems.map(item => ({\n  json: {\n    ...item.json,\n    ...CONSTANT_COLUMNS\n  }\n}));\n\nconsole.log(`✅ ${enrichedItems.length} items enrichis avec colonnes constantes + BLF + PhoneSettings`);\n\nreturn enrichedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1560
+      ],
+      "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
+      "name": "Add Constant Columns"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowName = $workflow.name;\nconst startTime = new Date($execution.startedAt).getTime();\nconst endTime = Date.now();\nconst executionTime = ((endTime - startTime) / 1000).toFixed(2);\n\nreturn [{\n  json: {\n    notificationType: 'success',\n    workflowName: workflowName,\n    status: 'success',\n    message: 'Workflow terminé avec succès',\n    executionTime: executionTime,\n    chatId: '5992469226'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        1436
+      ],
+      "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
+      "name": "Parse CSV"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraire le nom du client depuis les données DTX\nconst data = $input.first().json.data;\n\n// Chercher dans les premières lignes le champ \"Nom client\"\nlet clientName = \"client\"; // Valeur par défaut\n\nif (Array.isArray(data)) {\n  for (let i = 0; i < Math.min(10, data.length); i++) {\n    const row = data[i];\n    \n    // Chercher \"Nom client\" dans différents champs\n    if (row.DT && row.DT.toLowerCase().includes(\"nom client\")) {\n      // Le nom est dans la colonne suivante (DTM52690 ou autre)\n      clientName = row.DTM52690 || row.__EMPTY_1 || row.__EMPTY_2 || \"client\";\n      break;\n    }\n    \n    // Ou directement si le champ contient le nom\n    if (row[\"Nom client \"]) {\n      clientName = row[\"Nom client \"];\n      break;\n    }\n  }\n}\n\n// Nettoyer le nom du client (minuscules, espaces → tirets)\nclientName = clientName.toString()\n  .toLowerCase()\n  .trim()\n  .normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\") // Enlever accents\n  .replace(/\\s+/g, '-') // Remplacer espaces par -\n  .replace(/[^a-z0-9-]+/g, '-') // Remplacer caractères spéciaux par -\n  .replace(/-+/g, '-') // Remplacer tirets multiples par un seul\n  .replace(/^-+|-+$/g, ''); // Enlever - au début/fin\n\nconsole.log(`✅ Nom client extrait : \"${clientName}\"`);\n\n// Retourner les données avec le nom du client\nreturn [{\n  json: {\n    ...data,\n    clientName: clientName,\n    siteCode: `mtq-3cx-${clientName}-1`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1888,
+        1436
+      ],
+      "id": "dd16444a-de7a-4a87-a581-a91630a87290",
+      "name": "Extract Client Name"
     }
   ],
   "pinData": {},
@@ -457,7 +471,7 @@
       "main": [
         [
           {
-            "node": "Generate BLF XML",
+            "node": "Extract Client Name",
             "type": "main",
             "index": 0
           }
@@ -556,18 +570,7 @@
       "main": [
         [
           {
-            "node": "Code in JavaScript2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript2": {
-      "main": [
-        [
-          {
-            "node": "Call 'Telegram Notification Service'1",
+            "node": "Parse CSV",
             "type": "main",
             "index": 0
           }
@@ -606,17 +609,6 @@
         ]
       ]
     },
-    "Add PhoneSettings": {
-      "main": [
-        [
-          {
-            "node": "Convert to File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Convert to File": {
       "main": [
         [
@@ -632,7 +624,7 @@
       "main": [
         [
           {
-            "node": "Add PhoneSettings",
+            "node": "Add Constant Columns",
             "type": "main",
             "index": 0
           }
@@ -649,6 +641,39 @@
           }
         ]
       ]
+    },
+    "Add Constant Columns": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Call 'Telegram Notification Service'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Client Name": {
+      "main": [
+        [
+          {
+            "node": "Generate BLF XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -656,7 +681,7 @@
     "executionOrder": "v1",
     "availableInMCP": true
   },
-  "versionId": "260aa6cd-98d2-4fc0-97d1-0f11e0958f76",
+  "versionId": "eb118231-6b76-4515-9de9-25d4a8384b4b",
   "meta": {
     "templateCredsSetupCompleted": true
   },
