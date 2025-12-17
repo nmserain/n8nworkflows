@@ -7,7 +7,7 @@
       "typeVersion": 1,
       "position": [
         -3008,
-        1340
+        1312
       ],
       "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
       "name": "When clicking ‘Execute workflow’"
@@ -16,14 +16,15 @@
       "parameters": {
         "operation": "xlsx",
         "options": {
-          "includeEmptyCells": true
+          "includeEmptyCells": true,
+          "sheetName": "DT Recap"
         }
       },
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
         -2336,
-        1436
+        1408
       ],
       "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
       "name": "Extract dtx",
@@ -38,7 +39,7 @@
       "typeVersion": 1,
       "position": [
         -2112,
-        1436
+        1408
       ],
       "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
       "name": "Aggregate"
@@ -63,7 +64,7 @@
       "typeVersion": 3,
       "position": [
         -2784,
-        1340
+        1312
       ],
       "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
       "name": "📋 Get DTX",
@@ -88,7 +89,7 @@
       "typeVersion": 3,
       "position": [
         -2560,
-        1340
+        1312
       ],
       "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
       "name": "⬇️ Download DTX",
@@ -101,13 +102,13 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extraire le JSON de la réponse de l'IA\nconst response = $input.first().json;\nconst content = response.message.content;\nconst data = JSON.parse(content);\n\n// Préparer les données au format attendu par Convert to File\nconst devices = data.devices.map(device => ({\n  '*MAC': device.MAC,\n  '*Machine ID(Serial Number)': device.MachineID,\n  'Model': device.Model,\n  'Device Name': device.DeviceName,\n  'Site': device.Site,\n  'Unique URL': device.UniqueURL,\n  'User Name': device.UserName,\n  'Password': device.Password,\n  'Description': device.Description,\n  'Account Type': device.AccountType,\n  'Account Info': device.AccountInfo,\n  'Account Line': device.AccountLine\n}));\n\n// Retourner les données formatées\nreturn devices.map(device => ({ json: device }));"
+        "jsCode": "// Extraire le JSON de la réponse de l'IA\nconst response = $input.first().json;\nconst content = $input.first().json.content[0].text;\nconst data = JSON.parse(content);\n\n// Préparer les données au format attendu par Convert to File\nconst devices = data.devices.map(device => ({\n  '*MAC': device.MAC,\n  '*Machine ID(Serial Number)': device.MachineID,\n  'Model': device.Model,\n  'Device Name': device.DeviceName,\n  'Site': device.Site,\n  'Unique URL': device.UniqueURL,\n  'User Name': device.UserName,\n  'Password': device.Password,\n  'Description': device.Description,\n  'Account Type': device.AccountType,\n  'Account Info': device.AccountInfo,\n  'Account Line': device.AccountLine\n}));\n\n// Retourner les données formatées\nreturn devices.map(device => ({ json: device }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -736,
-        1312
+        1504
       ],
       "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
       "name": "YMCS Format"
@@ -117,7 +118,7 @@
         "operation": "xlsx",
         "options": {
           "compression": true,
-          "fileName": "=3cx_import_{{ $(\"Extract Client Name\").first().json.clientName }}.xlsx",
+          "fileName": "=YMCS_import_{{ $(\"Extract Client Name\").first().json.clientName }}.xlsx",
           "headerRow": true,
           "sheetName": "devices_template"
         }
@@ -126,45 +127,10 @@
       "typeVersion": 1.1,
       "position": [
         -512,
-        1312
+        1504
       ],
       "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
       "name": "Convert File & Download"
-    },
-    {
-      "parameters": {
-        "modelId": {
-          "__rl": true,
-          "value": "chatgpt-4o-latest",
-          "mode": "list",
-          "cachedResultName": "CHATGPT-4O-LATEST"
-        },
-        "messages": {
-          "values": [
-            {
-              "content": "=Voici les données du fichier Excel DTX en format JSON :\n\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n**IMPORTANT - Nom du client détecté** :\nNom du client : {{ $json.clientName }}\nCode site à utiliser : {{ $json.siteCode }}\n\n : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : {{ $json.siteCode }}\n   - Format : mtq-3cx-[nom-client]-1\n   - Exemple : mtq-3cx-ovecaraibes-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"{{ $json.siteCode }}\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\n",
-              "role": "assistant"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.openAi",
-      "typeVersion": 1.8,
-      "position": [
-        -1088,
-        1312
-      ],
-      "id": "98f5923f-e4af-4fd3-83a6-1bf4971d5b50",
-      "name": "XLSX YMCS",
-      "executeOnce": false,
-      "alwaysOutputData": false,
-      "credentials": {
-        "openAiApi": {
-          "id": "uVRUCtuJ9tL0nrKZ",
-          "name": "OpenAi account"
-        }
-      }
     },
     {
       "parameters": {
@@ -177,7 +143,7 @@
       "typeVersion": 2.1,
       "position": [
         -2560,
-        1532
+        1504
       ],
       "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
       "name": "Webhook",
@@ -191,7 +157,7 @@
       "typeVersion": 1.4,
       "position": [
         160,
-        1436
+        1408
       ],
       "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
       "name": "Respond to Webhook"
@@ -202,36 +168,10 @@
       "typeVersion": 3.2,
       "position": [
         -288,
-        1436
+        1408
       ],
       "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
       "name": "Merge"
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "chatgpt-4o-latest",
-          "mode": "list",
-          "cachedResultName": "chatgpt-4o-latest"
-        },
-        "builtInTools": {},
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.3,
-      "position": [
-        -1368,
-        1784
-      ],
-      "id": "e434ca5b-6b8d-4856-9349-7539893fc62e",
-      "name": "OpenAI Chat Model1",
-      "credentials": {
-        "openAiApi": {
-          "id": "uVRUCtuJ9tL0nrKZ",
-          "name": "OpenAi account"
-        }
-      }
     },
     {
       "parameters": {
@@ -252,7 +192,7 @@
       "typeVersion": 1.3,
       "position": [
         608,
-        1436
+        1408
       ],
       "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
       "name": "Call 'Telegram Notification Service'1"
@@ -265,25 +205,10 @@
       "typeVersion": 2,
       "position": [
         -1664,
-        1436
+        1408
       ],
       "id": "e2a3a9f3-6f09-4171-ba1d-ae90ed041c4a",
       "name": "Generate BLF XML"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=Voici les données du fichier Excel DTX en format JSON :\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n# Prompt de conversion DTX → CSV 3CX (COLONNES MINIMALES)\n\n## Mission\nExtraire les données VARIABLES de chaque utilisateur du fichier DTX.\nLes colonnes constantes seront ajoutées automatiquement par le système.\n\n## Colonnes à générer (SEULEMENT 11 colonnes)\n\n**Column 1: Number** - Extension (ex: 2001, 2002)\n**Column 2: FirstName** - Nom/Service (ex: \"Accueil\", \"Infirmier\")\n**Column 3: LastName** - Prénom (souvent vide, utiliser \"\")\n**Column 4: EmailAddress** - Email de l'utilisateur\n**Column 5: DID** - SDA avec préfixe 596 (ex: 596596421201)\n**Column 6: OutboundCallerID** - Numéro sortant (ex: 0596421201)\n**Column 7: MAC** - Adresse MAC 12 caractères MAJUSCULES sans tirets (ex: 44DBD2B367BE)\n**Column 8: Router** - MAC du routeur (même valeur que MAC si c'est le routeur, sinon MAC du premier téléphone)\n**Column 9: Model** - Modèle téléphone (ex: \"Yealink T54W\", \"Yealink T34W\", \"Yealink T33G\")\n**Column 10: WebMeetingFriendlyName** - Nom meeting : nom en minuscules + 4 chiffres aléatoires (ex: \"accueil2001\"). la somme des caractères doit être inférieur à 10\n**Column 11: VMPIN** - PIN messagerie : 4 chiffres aléatoires (ex: \"3714\")\n\n\n## Extraction des données du JSON\n\nLe JSON contient :\n- Première ligne (index 0) = headers (ignorer)\n- Lignes suivantes = données utilisateurs\n\nChamps DTX à utiliser :\n- `__EMPTY_1` = Extension (Number)\n- `DT` = Nom (FirstName)\n- `DTM52690` = Prénom (LastName, souvent vide)\n- `__EMPTY_7` = Email (EmailAddress)\n- `__EMPTY_2` = SDA (pour DID - ajouter préfixe 596)\n- `__EMPTY_3` = Numéro sortant (OutboundCallerID)\n- `À compléter : par Dauphin Télécom` = MAC\n- `__EMPTY_9` = Router MAC\n- `__EMPTY_4` = Modèle (Model)\n\n## Règles de transformation\n\n1. **Extension >= 2000** : Ne traiter que les lignes avec Extension >= 2000\n2. **MAC** : Nettoyer (enlever tirets/espaces), 12 caractères MAJUSCULES\n3. **DID** : Ajouter préfixe \"596\" au SDA (ex: 0596421201 → 5960596421201)\n4. **Model** : Mapper les modèles\n   - \"T54\" ou \"SIP-T54\" → \"Yealink T54W\"\n   - \"T34\" ou \"SIP-T34\" → \"Yealink T34W\"\n   - \"T31G\" → \"Yealink T33G\"\n5. **WebMeetingFriendlyName** : Nom en minuscules + 4 chiffres (ex: \"accueil2001\")\n6. **VMPIN** : Générer 4 chiffres aléatoires\n7. **Role** : Toujours `<role name=\"users\" />`\n8. **Department** : Toujours \"DEFAULT\"\n\n## Format de sortie\n\nCSV avec EXACTEMENT 11 colonnes, séparées par des virgules.\n\n**IMPORTANT** : Les colonnes Role et Department seront ajoutées automatiquement par le système, ne les génère PAS.\n\nPremière ligne = headers (obligatoire)\nLignes suivantes = données\n\n**IMPORTANT** :\n- Entourer de guillemets doubles les valeurs contenant : virgules, < >, espaces multiples\n- Champs vides = deux virgules consécutives (,,) ou guillemets vides (\"\")\n- NE PAS ajouter de ligne \"# TOTAL_LIGNES\"\n- Retourner UNIQUEMENT le CSV brut, pas de markdown (```csv)\n\n## Exemple de sortie\n\n```\nNumber,FirstName,LastName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN,Role,Department\n2001,Accueil,,service.informatique@ove-caraibes.com,5960596421201,0596421201,44DBD2B367BE,44DBD2B367BE,Yealink T54W,accueil2001,3714,\"<role name=\"\"users\"\" />\",DEFAULT\n2002,Infirmier,,service.informatique@ove-caraibes.com,5960596655003,0596421201,44DBD288F416,44DBD2B367BE,Yealink T34W,infirmier2002,6802,\"<role name=\"\"users\"\" />\",DEFAULT\n```\n\n⚠️ **RÈGLES CRITIQUES** :\n1. Toutes les lignes doivent avoir EXACTEMENT 11 colonnes\n2. Pas de ligne de commentaire ou de contrôle\n3. Retourner UNIQUEMENT le CSV (pas de texte explicatif ni de ```\\n)\n",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3,
-      "position": [
-        -1440,
-        1560
-      ],
-      "id": "6323d640-29d4-4a36-89a6-bcccd56eecdd",
-      "name": "CSV 3CX"
     },
     {
       "parameters": {
@@ -295,7 +220,7 @@
       "typeVersion": 1.1,
       "position": [
         -512,
-        1560
+        1312
       ],
       "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
       "name": "Convert to File"
@@ -309,8 +234,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -3120,
-        1104
+        -3088,
+        1072
       ],
       "id": "3897658d-7f5b-47e4-985c-caccb9cbbaa4",
       "name": "Sticky Note"
@@ -318,7 +243,7 @@
     {
       "parameters": {
         "content": "## 🤖 GÉNÉRATION BLF + FICHIERS D'IMPORT\n\n**Étape 1 - Generate BLF XML** :\n- Extrait toutes les extensions du DTX\n- Génère XML BLF dynamique (max 18 extensions)\n- Stocke dans `blfXmlGenerated`\n\n**Étape 2 - Fichier YMCS** :\n- IA génère JSON structuré\n- Format YMCS pour gestion téléphones\n- Conversion → Excel (.xlsx)\n\n**Étape 3 - Fichier 3CX** :\n- IA génère 13 colonnes variables (Number, FirstName, MAC, etc.)\n- Parse CSV → JSON\n- Add Constant Columns ajoute 42 colonnes + BLF + PhoneSettings\n- Total : 55 colonnes",
-        "height": 992,
+        "height": 832,
         "width": 1280,
         "color": 4
       },
@@ -326,20 +251,20 @@
       "typeVersion": 1,
       "position": [
         -1456,
-        936
+        832
       ],
       "id": "70cc28b8-dfa7-4c30-92dc-c1c0a5cbe570",
       "name": "Sticky Note1"
     },
     {
       "parameters": {
-        "jsCode": "// Récupération brute de la réponse IA (gestion multi-formats)\nconst response = $input.first().json;\n\n// Essayer différents formats possibles de sortie OpenAI\nlet csvContent = '';\n\nif (response.message && response.message.content) {\n  csvContent = response.message.content.trim();\n} else if (response.content) {\n  csvContent = response.content.trim();\n} else if (response.output) {\n  csvContent = response.output.trim();\n} else if (response.text) {\n  csvContent = response.text.trim();\n} else if (typeof response === 'string') {\n  csvContent = response.trim();\n} else {\n  csvContent = JSON.stringify(response);\n}\n\n// Fonction de parsing CSV robuste (gère les guillemets et décalages)\nfunction parseCSV(data) {\n  const lines = data.split('\\n').filter(line => {\n    const trimmed = line.trim();\n    // Filtrer les lignes vides et les commentaires\n    return trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//');\n  });\n\n  if (lines.length === 0) return [];\n\n  // Parser les headers\n  const headers = [];\n  let current = '';\n  let insideQuotes = false;\n  const headerLine = lines[0];\n\n  for (let i = 0; i < headerLine.length; i++) {\n    const char = headerLine[i];\n    const nextChar = headerLine[i + 1];\n\n    if (char === '\"') {\n      if (insideQuotes && nextChar === '\"') {\n        current += '\"';\n        i++;\n      } else {\n        insideQuotes = !insideQuotes;\n      }\n    } else if (char === ',' && !insideQuotes) {\n      headers.push(current.trim());\n      current = '';\n    } else {\n      current += char;\n    }\n  }\n  headers.push(current.trim());\n\n  const expectedColumns = headers.length;\n  console.log(`CSV Headers: ${expectedColumns} colonnes attendues`);\n\n  // Parser les lignes de données\n  const rows = [];\n  for (let lineIdx = 1; lineIdx < lines.length; lineIdx++) {\n    const line = lines[lineIdx];\n    const row = [];\n    current = '';\n    insideQuotes = false;\n\n    for (let charIndex = 0; charIndex < line.length; charIndex++) {\n      const char = line[charIndex];\n      const nextChar = line[charIndex + 1];\n\n      if (char === '\"') {\n        if (insideQuotes && nextChar === '\"') {\n          current += '\"';\n          charIndex++;\n        } else {\n          insideQuotes = !insideQuotes;\n        }\n      } else if (char === ',' && !insideQuotes) {\n        row.push(current.trim());\n        current = '';\n      } else {\n        current += char;\n      }\n    }\n    row.push(current.trim());\n\n    // Vérifier que le nombre de colonnes correspond\n    if (row.length !== expectedColumns) {\n      console.warn(`Ligne ${lineIdx + 1}: ${row.length} colonnes au lieu de ${expectedColumns} - IGNORÉE`);\n      console.warn(`Début de ligne: ${line.substring(0, 100)}`);\n      continue; // Ignorer les lignes mal formatées\n    }\n\n    rows.push(row);\n  }\n\n  // Convertir en objets\n  return rows.map(cols => {\n    const obj = {};\n    headers.forEach((header, idx) => {\n      obj[header] = cols[idx] || '';\n    });\n    return obj;\n  });\n}\n\nconst parsed = parseCSV(csvContent);\n\nconsole.log(`✅ ${parsed.length} lignes parsées avec succès`);\n\n// Retourner chaque ligne formatée\nreturn parsed.map(row => ({ json: row }));\n"
+        "jsCode": "// Récupération brute de la réponse IA (gestion multi-formats)\nconst response = $input.first().json.content[0].text;\n\n// Essayer différents formats possibles de sortie OpenAI\nlet csvContent = '';\n\nif (response.message && response.message.content) {\n  csvContent = response.message.content.trim();\n} else if (response.content) {\n  csvContent = response.content.trim();\n} else if (response.output) {\n  csvContent = response.output.trim();\n} else if (response.text) {\n  csvContent = response.text.trim();\n} else if (typeof response === 'string') {\n  csvContent = response.trim();\n} else {\n  csvContent = JSON.stringify(response);\n}\n\n// Fonction de parsing CSV robuste (gère les guillemets et décalages)\nfunction parseCSV(data) {\n  const lines = data.split('\\n').filter(line => {\n    const trimmed = line.trim();\n    // Filtrer les lignes vides et les commentaires\n    return trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//');\n  });\n\n  if (lines.length === 0) return [];\n\n  // Parser les headers\n  const headers = [];\n  let current = '';\n  let insideQuotes = false;\n  const headerLine = lines[0];\n\n  for (let i = 0; i < headerLine.length; i++) {\n    const char = headerLine[i];\n    const nextChar = headerLine[i + 1];\n\n    if (char === '\"') {\n      if (insideQuotes && nextChar === '\"') {\n        current += '\"';\n        i++;\n      } else {\n        insideQuotes = !insideQuotes;\n      }\n    } else if (char === ',' && !insideQuotes) {\n      headers.push(current.trim());\n      current = '';\n    } else {\n      current += char;\n    }\n  }\n  headers.push(current.trim());\n\n  const expectedColumns = headers.length;\n  console.log(`CSV Headers: ${expectedColumns} colonnes attendues`);\n\n  // Parser les lignes de données\n  const rows = [];\n  for (let lineIdx = 1; lineIdx < lines.length; lineIdx++) {\n    const line = lines[lineIdx];\n    const row = [];\n    current = '';\n    insideQuotes = false;\n\n    for (let charIndex = 0; charIndex < line.length; charIndex++) {\n      const char = line[charIndex];\n      const nextChar = line[charIndex + 1];\n\n      if (char === '\"') {\n        if (insideQuotes && nextChar === '\"') {\n          current += '\"';\n          charIndex++;\n        } else {\n          insideQuotes = !insideQuotes;\n        }\n      } else if (char === ',' && !insideQuotes) {\n        row.push(current.trim());\n        current = '';\n      } else {\n        current += char;\n      }\n    }\n    row.push(current.trim());\n\n    // Vérifier que le nombre de colonnes correspond\n    if (row.length !== expectedColumns) {\n      console.warn(`Ligne ${lineIdx + 1}: ${row.length} colonnes au lieu de ${expectedColumns} - IGNORÉE`);\n      console.warn(`Début de ligne: ${line.substring(0, 100)}`);\n      continue; // Ignorer les lignes mal formatées\n    }\n\n    rows.push(row);\n  }\n\n  // Convertir en objets\n  return rows.map(cols => {\n    const obj = {};\n    headers.forEach((header, idx) => {\n      obj[header] = cols[idx] || '';\n    });\n    return obj;\n  });\n}\n\nconst parsed = parseCSV(csvContent);\n\nconsole.log(`✅ ${parsed.length} lignes parsées avec succès`);\n\n// Retourner chaque ligne formatée\nreturn parsed.map(row => ({ json: row }));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -1024,
-        1560
+        1312
       ],
       "id": "e60759b1-ead0-4260-af48-3e441ce369c9",
       "name": "3CX Format"
@@ -352,7 +277,7 @@
       "typeVersion": 2,
       "position": [
         -64,
-        1436
+        1408
       ],
       "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
       "name": "Files to bas64"
@@ -367,7 +292,7 @@
       "typeVersion": 1,
       "position": [
         -144,
-        1004
+        976
       ],
       "id": "42f626ad-a923-4c58-bd11-fef8987eb1ab",
       "name": "Sticky Note2"
@@ -383,7 +308,7 @@
       "typeVersion": 1,
       "position": [
         352,
-        1148
+        1104
       ],
       "id": "fb29806a-40b7-431e-8345-d72b4f72b606",
       "name": "Sticky Note3"
@@ -391,14 +316,14 @@
     {
       "parameters": {
         "content": "  ## 🔄 AGRÉGATION DES DONNÉES\n  **Aggregate** :\n  - Regroupe tous les items Excel en un seul objet\n  - Entrée : Multiple items (une par feuille Excel)\n  - Sortie : Un seul item avec toutes les données\n\n  **📛 Extract Client Name** :\n  - Extrait le nom du client depuis les données DTX\n  - Nettoie le nom : minuscules, sans accents\n  - Espaces → tirets (ex: \"OVE CARAIBES\" → \"ove-caraibes\")\n  - Génère clientName et siteCode (mtq-3cx-[client]-1)\n\n  **Nécessaire pour** :\n  - Permettre aux agents IA d'accéder à toutes les données\n  - Générer des noms de fichiers et codes site dynamiques",
-        "height": 512,
-        "width": 800
+        "height": 560,
+        "width": 848
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -2352,
-        1072
+        1008
       ],
       "id": "86c32899-55d9-4d6e-8e6b-c3d77a2e7c08",
       "name": "Sticky Note4"
@@ -411,7 +336,7 @@
       "typeVersion": 2,
       "position": [
         -736,
-        1560
+        1312
       ],
       "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
       "name": "Add Constant Columns"
@@ -424,7 +349,7 @@
       "typeVersion": 2,
       "position": [
         384,
-        1436
+        1408
       ],
       "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
       "name": "Parse CSV"
@@ -437,10 +362,74 @@
       "typeVersion": 2,
       "position": [
         -1888,
-        1436
+        1408
       ],
       "id": "dd16444a-de7a-4a87-a581-a91630a87290",
       "name": "Extract Client Name"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-5-20250929",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-5-20250929"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n# Prompt de conversion DTX → CSV 3CX (COLONNES MINIMALES)\n\n## Mission\nExtraire les données VARIABLES de chaque utilisateur du fichier DTX.\nLes colonnes constantes seront ajoutées automatiquement par le système.\n\n## Colonnes à générer (SEULEMENT 11 colonnes)\n\n**Column 1: Number** - Extension (ex: 2001, 2002)\n**Column 2: FirstName** - Nom/Service (ex: \"Accueil\", \"Infirmier\")\n**Column 3: LastName** - Prénom (souvent vide, utiliser \"\")\n**Column 4: EmailAddress** - Email de l'utilisateur\n**Column 5: DID** - SDA avec préfixe 596 (ex: 596596421201)\n**Column 6: OutboundCallerID** - Numéro sortant (ex: 0596421201)\n**Column 7: MAC** - Adresse MAC 12 caractères MAJUSCULES sans tirets (ex: 44DBD2B367BE)\n**Column 8: Router** - MAC du routeur (même valeur que MAC si c'est le routeur, sinon MAC du premier téléphone)\n**Column 9: Model** - Modèle téléphone (ex: \"Yealink T54W\", \"Yealink T34W\", \"Yealink T33G\")\n**Column 10: WebMeetingFriendlyName** - Nom meeting : nom en minuscules + 4 chiffres aléatoires (ex: \"accueil2001\"). la somme des caractères doit être inférieur à 10\n**Column 11: VMPIN** - PIN messagerie : 4 chiffres aléatoires (ex: \"3714\")\n\n\n## Extraction des données du JSON\n\nLe JSON contient :\n- Première ligne (index 0) = headers (ignorer)\n- Lignes suivantes = données utilisateurs\n\nChamps DTX à utiliser :\n- `__EMPTY_1` = Extension (Number)\n- `DT` = Nom (FirstName)\n- `DTM52690` = Prénom (LastName, souvent vide)\n- `__EMPTY_7` = Email (EmailAddress)\n- `__EMPTY_2` = SDA (pour DID - ajouter préfixe 596)\n- `__EMPTY_3` = Numéro sortant (OutboundCallerID)\n- `À compléter : par Dauphin Télécom` = MAC\n- `__EMPTY_9` = Router MAC\n- `__EMPTY_4` = Modèle (Model)\n\n## Règles de transformation\n\n1. **Extension >= 2000** : Ne traiter que les lignes avec Extension >= 2000\n2. **MAC** : Nettoyer (enlever tirets/espaces), 12 caractères MAJUSCULES\n3. **DID** : Ajouter préfixe \"596\" au SDA (ex: 0596421201 → 5960596421201)\n4. **Model** : Mapper les modèles\n   - \"T54\" ou \"SIP-T54\" → \"Yealink T54W\"\n   - \"T34\" ou \"SIP-T34\" → \"Yealink T34W\"\n   - \"T31G\" → \"Yealink T33G\"\n5. **WebMeetingFriendlyName** : Nom en minuscules + 4 chiffres (ex: \"accueil2001\")\n6. **VMPIN** : Générer 4 chiffres aléatoires\n7. **Role** : Toujours `<role name=\"users\" />`\n8. **Department** : Toujours \"DEFAULT\"\n\n## Format de sortie\n\nCSV avec EXACTEMENT 11 colonnes, séparées par des virgules.\n\n**IMPORTANT** : Les colonnes Role et Department seront ajoutées automatiquement par le système, ne les génère PAS.\n\nPremière ligne = headers (obligatoire)\nLignes suivantes = données\n\n**IMPORTANT** :\n- Entourer de guillemets doubles les valeurs contenant : virgules, < >, espaces multiples\n- Champs vides = deux virgules consécutives (,,) ou guillemets vides (\"\")\n- NE PAS ajouter de ligne \"# TOTAL_LIGNES\"\n- Retourner UNIQUEMENT le CSV brut, pas de markdown, pas de ``` en début et fin de fichier\n\n## Exemple de sortie\n\nNumber,FirstName,LastName,EmailAddress,DID,OutboundCallerID,MAC,Router,Model,WebMeetingFriendlyName,VMPIN,Role,Department\n2001,Accueil,,service.informatique@ove-caraibes.com,5960596421201,0596421201,44DBD2B367BE,44DBD2B367BE,Yealink T54W,accueil2001,3714,\"<role name=\"\"users\"\" />\",DEFAULT\n2002,Infirmier,,service.informatique@ove-caraibes.com,5960596655003,0596421201,44DBD288F416,44DBD2B367BE,Yealink T34W,infirmier2002,6802,\"<role name=\"\"users\"\" />\",DEFAULT\n\n\n⚠️ **RÈGLES CRITIQUES** :\n1. Toutes les lignes doivent avoir EXACTEMENT 11 colonnes\n2. Pas de ligne de commentaire ou de contrôle\n3. Retourner UNIQUEMENT le CSV (pas de texte explicatif)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        1312
+      ],
+      "id": "424878b1-0c3f-4d6b-86de-5953f9ddcb02",
+      "name": "CSV 3CX",
+      "credentials": {
+        "anthropicApi": {
+          "id": "2vs0Sx3yFjNxARMc",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-5-20250929",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-5-20250929"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Voici les données du fichier Excel DTX en format JSON :\n\n{{ JSON.stringify($('Aggregate').item.json.data) }}\n\n**IMPORTANT - Nom du client détecté** :\nNom du client : {{ $json.clientName }}\nCode site à utiliser : {{ $json.siteCode }}\n\n : DTX → YMCS\nMission\nConvertir un fichier Excel DTX en fichier d'import json.\n\nInput DTX\nFichier Excel avec colonnes : Extension, Service/Nom, Prénom, MAC, S/N, Modèle\n\nIMPORTANT : Lire UNIQUEMENT la première feuille du fichier Excel (ignorer les autres feuilles comme \"IVR\", \"Values\", \"Horaires\", etc.)\n\nOutput YMCS\nStructure :\nLigne 0: *MAC | *Machine ID(Serial Number) | Model | Device Name | Site | Unique URL | User Name | Password | Description | Account Type | Account Info | Account Line\nLigne 1+: [Données des équipements]\nFormat du fichier :\nFeuille Excel nommée \"Device_Template\"\n\nLigne 0 : En-têtes des colonnes\n\nLignes suivantes : Données des équipements\n\nFormat .xlsx\n\nRègles de Transformation\nChamps obligatoires :\nMAC (Col 0) : DTX MAC → Enlever tirets/espaces → MAJUSCULES → 12 caractères\n   - Ex: 44-DB-D2-A6-7C-BF → 44DBD2A67CBF\n\nMachine ID (Col 1) : DTX S/N → Copier tel quel\n   - Ex: 801081G110018725\n\nModel (Col 2) : DTX Modèle → Substitution/Standardisation (basée sur la liste fournie)\n   - Substitution Spécifique :\n       - Si DTX Modèle est SIP-W70+W56H, le remplacer par W70B.\n   - Correction 'W' Manquant :\n       - Si DTX Modèle est SIP-T54, le remplacer par SIP-T54W.\n       - Si DTX Modèle est SIP-T34, le remplacer par SIP-T34W.\n   - Autres Modèles T (Ajout de préfixe si nécessaire) :\n       - Si DTX Modèle est de la série T (ex: T31P) et ne commence pas par SIP-, le préfixer avec SIP-.\n       - Le modèle SIP-T21(P) E2 est accepté tel quel.\n   - Modèles DECT/VP : Les modèles qui commencent par W ou VP (ex: W90DM, VP59) sont acceptés tels quels.\n\nDevice Name (Col 3) : IMPORTANT → Format {Extension} - {Nom/Service}\n   - Si DTX a Service/Nom et Prénom: {Extension} - {Service/Nom} {Prénom}\n   - Sinon, si DTX a seulement Service/Nom: {Extension} - {Service/Nom}\n   - Ex: 2951 - COMPTABILITE PHETSANGHANE, 2000 - SECRETARIAT\n\n**⚠️ RÈGLE SPÉCIALE W56H (DECT Handset avec même MAC) :**\nSi plusieurs lignes ont le modèle \"W56H\" ou \"SIP-W56H\" ET la même adresse MAC :\n- Regrouper ces lignes en UNE SEULE ligne dans le fichier YMCS\n- Device Name : \"BASE - [EXT1] [EXT2] [EXT3] ...\"\n- Exemple : Si extensions 2080, 2081, 2082 ont la même MAC → Device Name = \"BASE - 2080 2081 2082\"\n- MAC : L'adresse MAC commune (nettoyée)\n- Machine ID : Le Serial Number de la base (premier trouvé)\n- Model : W56H\n- **IMPORTANT : Pas de doublon d'adresse MAC dans le fichier final YMCS**\n\n**Exemple W56H regroupé** :\nEntrées DTX :\n- Extension 2080, MAC 305EC03F13, S/N 801081E011217378, Modèle W56H\n- Extension 2081, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n- Extension 2082, MAC 305EC03F13, S/N (vide ou identique), Modèle W56H\n\nSortie YMCS (UNE SEULE LIGNE) :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\nSite (Col 4) : {{ $json.siteCode }}\n   - Format : mtq-3cx-[nom-client]-1\n   - Exemple : mtq-3cx-ovecaraibes-1\n\nCols 5-11 : Laisser vides \"\"\n\nProcessus\nLire Excel DTX - UNIQUEMENT la 1ère feuille\n\nTrouver ligne en-têtes (lignes 3-7)\n\nExtraire lignes avec Extension >= 2000\n\n**TRAITEMENT SPÉCIAL W56H :**\nPour chaque ligne :\n   - Si modèle = W56H ET MAC existe déjà dans le résultat :\n      * Ne PAS créer une nouvelle ligne\n      * Ajouter l'extension au Device Name de la ligne existante (format \"BASE - [EXT1] [EXT2] ...\")\n   - Sinon (téléphone normal ou première occurrence W56H) :\n      * Nettoyer MAC (sans tirets)\n      * Corriger Modèle (appliquer la règle de substitution/standardisation)\n      * Créer Device Name selon pattern\n      * Générer ligne YMCS\n\nCréer Excel : Ligne 0 (en-têtes) + Lignes suivantes (données)\n\nFeuille nommée \"Device_Template\"\n\nSauver import_ymcs_{nom}.xlsx\n\nExemple\n**DTX avec W56H regroupés** :\nExtension=2080 | Nom=JOSEPH | Prénom=Jacqueline | MAC=305EC03F13 | S/N=801081E011217378 | Modèle=W56H\nExtension=2081 | Nom=DUPONT | Prénom=Pierre | MAC=305EC03F13 | S/N= | Modèle=W56H\nExtension=2082 | Nom=MARTIN | Prénom=Marie | MAC=305EC03F13 | S/N= | Modèle=W56H\n\n**YMCS Ligne 1 (UNE SEULE LIGNE pour les 3 extensions)** :\n305EC03F13 | 801081E011217378 | W56H | BASE - 2080 2081 2082 | mtq-3cx-eem-1 | | | | | | |\n\n---\n\n**DTX avec téléphone normal** :\nExtension=2102 | Nom=ROY-C | Prénom= | MAC=44-DB-D2-A6-7C-BF | S/N=801081G110018725 | Modèle=SIP-T54\n\n**YMCS Ligne 2 (ligne normale)** :\n44DBD2A67CBF | 801081G110018725 | SIP-T54W | 2102 - ROY-C | mtq-3cx-eem-1 | | | | | | |\n\nValidation\n✅ MAC 12 caractères sans tirets\n✅ Model corrigé (ex: SIP-T54 → SIP-T54W, SIP-W70+W56H → W70B)\n✅ Device Name = Extension - Nom (ou BASE - [EXT1] [EXT2] pour W56H regroupés)\n✅ Champs obligatoires remplis\n✅ Format Excel .xlsx correct\n✅ **PAS DE DOUBLON MAC dans le fichier final**\n\n⚠️ IMPORTANT : Retourne UNIQUEMENT un JSON structuré avec ce format :\n  {\n    \"devices\": [\n      {\n        \"MAC\": \"...\",\n        \"MachineID\": \"...\",\n        \"Model\": \"...\",\n        \"DeviceName\": \"...\",\n        \"Site\": \"{{ $json.siteCode }}\",\n        \"UniqueURL\": \"\",\n        \"UserName\": \"\",\n        \"Password\": \"\",\n        \"Description\": \"\",\n        \"AccountType\": \"\",\n        \"AccountInfo\": \"\",\n        \"AccountLine\": \"\"\n      }\n    ]\n  }\nNe met pas de ``` en début ni en fin de fichier.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        1504
+      ],
+      "id": "11578847-4761-41b3-b3e7-7001f8e1f96f",
+      "name": "XLSX YMCS",
+      "credentials": {
+        "anthropicApi": {
+          "id": "2vs0Sx3yFjNxARMc",
+          "name": "Anthropic account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -511,17 +500,6 @@
         ]
       ]
     },
-    "XLSX YMCS": {
-      "main": [
-        [
-          {
-            "node": "YMCS Format",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook": {
       "main": [
         [
@@ -555,17 +533,6 @@
         ]
       ]
     },
-    "OpenAI Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "CSV 3CX",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Respond to Webhook": {
       "main": [
         [
@@ -586,23 +553,12 @@
       "main": [
         [
           {
-            "node": "CSV 3CX",
+            "node": "XLSX YMCS",
             "type": "main",
             "index": 0
           },
           {
-            "node": "XLSX YMCS",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "CSV 3CX": {
-      "main": [
-        [
-          {
-            "node": "3CX Format",
+            "node": "CSV 3CX",
             "type": "main",
             "index": 0
           }
@@ -674,6 +630,28 @@
           }
         ]
       ]
+    },
+    "CSV 3CX": {
+      "main": [
+        [
+          {
+            "node": "3CX Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "XLSX YMCS": {
+      "main": [
+        [
+          {
+            "node": "YMCS Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -681,7 +659,7 @@
     "executionOrder": "v1",
     "availableInMCP": true
   },
-  "versionId": "eb118231-6b76-4515-9de9-25d4a8384b4b",
+  "versionId": "6f694b05-b3eb-4644-a36f-a910fde3b367",
   "meta": {
     "templateCredsSetupCompleted": true
   },
