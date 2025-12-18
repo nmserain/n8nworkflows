@@ -2,17 +2,6 @@
   "name": "Telegram Error Monitor",
   "nodes": [
     {
-      "parameters": {},
-      "id": "c019a2ce-96fa-4819-8375-7522a444303a",
-      "name": "Error Trigger",
-      "type": "n8n-nodes-base.errorTrigger",
-      "typeVersion": 1,
-      "position": [
-        256,
-        48
-      ]
-    },
-    {
       "parameters": {
         "jsCode": "// Format error notification\nconst input = $input.all();\nconst error = input[0].json;\n\n// Extract workflow information\nconst workflowName = error.workflow?.name || 'Unknown Workflow';\nconst workflowId = error.workflow?.id || 'unknown';\nconst errorMessage = error.execution?.error?.message || 'Unknown error';\nconst errorNode = error.execution?.error?.node?.name || 'Unknown node';\nconst executionId = error.execution?.id || 'unknown';\nconst executionMode = error.execution?.mode || 'unknown';\n\n// Build detailed error message\nlet telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\ntelegramMessage += `📋 Workflow: *${workflowName}*\\n`;\ntelegramMessage += `🔗 ID: \\`${workflowId}\\`\\n`;\ntelegramMessage += `📍 Node: *${errorNode}*\\n`;\ntelegramMessage += `🔄 Mode: ${executionMode}\\n`;\ntelegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorMessage}\\n\\`\\`\\``;\ntelegramMessage += `\\n\\n🆔 Execution ID: \\`${executionId}\\``;\ntelegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\nreturn [{\n  json: {\n    message: telegramMessage,\n    parseMode: 'Markdown'\n  }\n}];"
       },
@@ -48,10 +37,45 @@
           "name": "Telegram Scriptator Bot"
         }
       }
+    },
+    {
+      "parameters": {},
+      "id": "c019a2ce-96fa-4819-8375-7522a444303a",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        256,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "437e33e3-360a-4dab-8d1b-ad13c79b6903",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        208
+      ]
     }
   ],
   "pinData": {},
   "connections": {
+    "Format Error Message": {
+      "main": [
+        [
+          {
+            "node": "Send Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Error Trigger": {
       "main": [
         [
@@ -63,11 +87,11 @@
         ]
       ]
     },
-    "Format Error Message": {
+    "Execute Workflow Trigger": {
       "main": [
         [
           {
-            "node": "Send Error Notification",
+            "node": "Format Error Message",
             "type": "main",
             "index": 0
           }
@@ -79,7 +103,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "bd949f9e-27fc-4be5-b7a1-fd7cdda1871f",
+  "versionId": "5a219303-32c0-4b40-872f-687baf0bc84a",
   "meta": null,
   "id": "SP9XZTobyCIX1gxF",
   "tags": []

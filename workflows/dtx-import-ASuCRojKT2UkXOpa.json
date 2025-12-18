@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        -3008,
-        1312
+        -3456,
+        1264
       ],
       "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
       "name": "When clicking ‘Execute workflow’"
@@ -23,8 +23,8 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        -2336,
-        1408
+        -2784,
+        1360
       ],
       "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
       "name": "Extract dtx",
@@ -38,8 +38,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -2112,
-        1408
+        -2592,
+        1360
       ],
       "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
       "name": "Aggregate"
@@ -63,8 +63,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -2784,
-        1312
+        -3232,
+        1264
       ],
       "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
       "name": "📋 Get DTX",
@@ -88,8 +88,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -2560,
-        1312
+        -3008,
+        1264
       ],
       "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
       "name": "⬇️ Download DTX",
@@ -108,7 +108,7 @@
       "typeVersion": 2,
       "position": [
         -736,
-        1504
+        1168
       ],
       "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
       "name": "YMCS Format"
@@ -127,7 +127,7 @@
       "typeVersion": 1.1,
       "position": [
         -512,
-        1504
+        1168
       ],
       "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
       "name": "Convert File & Download"
@@ -142,8 +142,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2560,
-        1504
+        -3008,
+        1456
       ],
       "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
       "name": "Webhook",
@@ -157,7 +157,7 @@
       "typeVersion": 1.4,
       "position": [
         160,
-        1408
+        1264
       ],
       "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
       "name": "Respond to Webhook"
@@ -168,7 +168,7 @@
       "typeVersion": 3.2,
       "position": [
         -288,
-        1408
+        1264
       ],
       "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
       "name": "Merge"
@@ -192,7 +192,7 @@
       "typeVersion": 1.3,
       "position": [
         608,
-        1408
+        1264
       ],
       "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
       "name": "Call 'Telegram Notification Service'1"
@@ -205,7 +205,7 @@
       "typeVersion": 2,
       "position": [
         -1664,
-        1408
+        1264
       ],
       "id": "e2a3a9f3-6f09-4171-ba1d-ae90ed041c4a",
       "name": "Generate BLF XML"
@@ -213,14 +213,14 @@
     {
       "parameters": {
         "options": {
-          "fileName": "=3cx_import_{{ $('Extract Client Name').item.json.clientName }}.csv"
+          "fileName": "=3CX_import_{{ $('Extract Client Name').item.json.clientName }}.csv"
         }
       },
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
         -512,
-        1312
+        1360
       ],
       "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
       "name": "Convert to File"
@@ -234,8 +234,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -3088,
-        1072
+        -3536,
+        1024
       ],
       "id": "3897658d-7f5b-47e4-985c-caccb9cbbaa4",
       "name": "Sticky Note"
@@ -251,7 +251,7 @@
       "typeVersion": 1,
       "position": [
         -1456,
-        832
+        688
       ],
       "id": "70cc28b8-dfa7-4c30-92dc-c1c0a5cbe570",
       "name": "Sticky Note1"
@@ -264,7 +264,7 @@
       "typeVersion": 2,
       "position": [
         -1024,
-        1312
+        1360
       ],
       "id": "e60759b1-ead0-4260-af48-3e441ce369c9",
       "name": "3CX Format"
@@ -277,7 +277,7 @@
       "typeVersion": 2,
       "position": [
         -64,
-        1408
+        1264
       ],
       "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
       "name": "Files to bas64"
@@ -292,7 +292,7 @@
       "typeVersion": 1,
       "position": [
         -144,
-        976
+        832
       ],
       "id": "42f626ad-a923-4c58-bd11-fef8987eb1ab",
       "name": "Sticky Note2"
@@ -308,7 +308,7 @@
       "typeVersion": 1,
       "position": [
         352,
-        1104
+        976
       ],
       "id": "fb29806a-40b7-431e-8345-d72b4f72b606",
       "name": "Sticky Note3"
@@ -322,8 +322,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2352,
-        1008
+        -2608,
+        960
       ],
       "id": "86c32899-55d9-4d6e-8e6b-c3d77a2e7c08",
       "name": "Sticky Note4"
@@ -336,7 +336,7 @@
       "typeVersion": 2,
       "position": [
         -736,
-        1312
+        1360
       ],
       "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
       "name": "Add Constant Columns"
@@ -349,23 +349,10 @@
       "typeVersion": 2,
       "position": [
         384,
-        1408
+        1264
       ],
       "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
       "name": "Parse CSV"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extraire le nom du client depuis les données DTX\nconst data = $input.first().json.data;\n\n// Chercher dans les premières lignes le champ \"Nom client\"\nlet clientName = \"client\"; // Valeur par défaut\n\nif (Array.isArray(data)) {\n  for (let i = 0; i < Math.min(10, data.length); i++) {\n    const row = data[i];\n    \n    // Chercher \"Nom client\" dans différents champs\n    if (row.DT && row.DT.toLowerCase().includes(\"nom client\")) {\n      // Le nom est dans la colonne suivante (DTM52690 ou autre)\n      clientName = row.DTM52690 || row.__EMPTY_1 || row.__EMPTY_2 || \"client\";\n      break;\n    }\n    \n    // Ou directement si le champ contient le nom\n    if (row[\"Nom client \"]) {\n      clientName = row[\"Nom client \"];\n      break;\n    }\n  }\n}\n\n// Nettoyer le nom du client (minuscules, espaces → tirets)\nclientName = clientName.toString()\n  .toLowerCase()\n  .trim()\n  .normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\") // Enlever accents\n  .replace(/\\s+/g, '-') // Remplacer espaces par -\n  .replace(/[^a-z0-9-]+/g, '-') // Remplacer caractères spéciaux par -\n  .replace(/-+/g, '-') // Remplacer tirets multiples par un seul\n  .replace(/^-+|-+$/g, ''); // Enlever - au début/fin\n\nconsole.log(`✅ Nom client extrait : \"${clientName}\"`);\n\n// Retourner les données avec le nom du client\nreturn [{\n  json: {\n    ...data,\n    clientName: clientName,\n    siteCode: `mtq-3cx-${clientName}-1`\n  }\n}];\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1888,
-        1408
-      ],
-      "id": "dd16444a-de7a-4a87-a581-a91630a87290",
-      "name": "Extract Client Name"
     },
     {
       "parameters": {
@@ -388,7 +375,7 @@
       "typeVersion": 1,
       "position": [
         -1440,
-        1312
+        1360
       ],
       "id": "424878b1-0c3f-4d6b-86de-5953f9ddcb02",
       "name": "CSV 3CX",
@@ -420,7 +407,7 @@
       "typeVersion": 1,
       "position": [
         -1088,
-        1504
+        1168
       ],
       "id": "11578847-4761-41b3-b3e7-7001f8e1f96f",
       "name": "XLSX YMCS",
@@ -430,6 +417,97 @@
           "name": "Anthropic account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": " // ============================================\n  // DATA VALIDATION\n  // Validates the extracted Excel data structure\n  // ============================================\n\n  const data = $input.first().json.data;\n\n  // Check 1: Data exists\n  if (!data) {\n    throw new Error('VALIDATION_ERROR: No data extracted from Excel file. The file may be empty or corrupted.');\n  }\n\n  // Check 2: Is array\n  if (!Array.isArray(data)) {\n    throw new Error(`VALIDATION_ERROR: Invalid data format. Expected array, got ${typeof data}.`);\n  }\n\n  // Check 3: Has minimum rows\n  if (data.length < 5) {\n    throw new Error(\n      `VALIDATION_ERROR: File has only ${data.length} rows. ` +\n      'Expected at least 5 rows (headers + client info + data rows).'\n    );\n  }\n\n  // Check 4: Has required structure\n  const firstRow = data[0];\n  if (!firstRow || typeof firstRow !== 'object') {\n    throw new Error('VALIDATION_ERROR: First row has invalid structure.');\n  }\n\n  // Check 5: Has DT column\n  const hasDTColumn = data.some(row => row.DT !== undefined);\n  if (!hasDTColumn) {\n    throw new Error(\n      'VALIDATION_ERROR: Excel file missing required \"DT\" column. ' +\n      'Please ensure you are uploading the correct DTX template file.'\n    );\n  }\n\n  console.log(`✅ Data validation passed: ${data.length} rows, structure OK`);\n\n  // Pass through the data unchanged\n  return $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3456,
+        1680
+      ],
+      "id": "c2c766c8-20e9-4531-ae24-1b0d0fffe319",
+      "name": "Validate Input Data1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "SP9XZTobyCIX1gxF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/SP9XZTobyCIX1gxF",
+          "cachedResultName": "Telegram Error Monitor"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -2272,
+        1360
+      ],
+      "id": "049f8def-63c0-4016-9ebd-a940d495fe4c",
+      "name": "Call 'Telegram Error Monitor'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "SP9XZTobyCIX1gxF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/SP9XZTobyCIX1gxF",
+          "cachedResultName": "Telegram Error Monitor"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -1968,
+        1184
+      ],
+      "id": "84f21f4d-ab5c-4953-835b-4ad43d44f498",
+      "name": "Call 'Telegram Error Monitor'1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// DATA VALIDATION\n// Validates the extracted Excel data structure\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Check 1: Data exists\nif (!data) {\n  throw new Error('VALIDATION_ERROR: No data extracted from Excel file. The file may be empty or corrupted.');\n}\n\n// Check 2: Is array\nif (!Array.isArray(data)) {\n  throw new Error(`VALIDATION_ERROR: Invalid data format. Expected array, got ${typeof data}.`);\n}\n\n// Check 3: Has minimum rows\nif (data.length < 5) {\n  throw new Error(\n    `VALIDATION_ERROR: File has only ${data.length} rows. ` +\n    'Expected at least 5 rows (headers + client info + data rows).'\n  );\n}\n\n// Check 4: Has required structure\nconst firstRow = data[0];\nif (!firstRow || typeof firstRow !== 'object') {\n  throw new Error('VALIDATION_ERROR: First row has invalid structure.');\n}\n\n// Check 5: Has DT column\nconst hasDTColumn = data.some(row => row.DT !== undefined);\nif (!hasDTColumn) {\n  throw new Error(\n    'VALIDATION_ERROR: Excel file missing required \"DT\" column. ' +\n    'Please ensure you are uploading the correct DTX template file.'\n  );\n}\n\nconsole.log(`✅ Data validation passed: ${data.length} rows, structure OK`);\n\n// Pass through the data unchanged\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2448,
+        1360
+      ],
+      "id": "7df616b5-e61c-454c-83a6-d04541a5c47a",
+      "name": "Validate Input Data",
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// EXTRACTION NOM CLIENT DEPUIS CELLULE C (3ème colonne)\n// Version: Position-based with comprehensive error handling\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Validation: Check if data exists\nif (!data) {\n  throw new Error('EXTRACTION_ERROR: No data received from previous node');\n}\n\nif (!Array.isArray(data)) {\n  throw new Error('EXTRACTION_ERROR: Data is not an array. Received type: ' + typeof data);\n}\n\nif (data.length === 0) {\n  throw new Error('EXTRACTION_ERROR: Data array is empty. The Excel file may be empty or corrupted.');\n}\n\nlet clientName = null;\n\n// Find the row containing \"Nom client \" in the DT column\nconst clientRow = data.find(row => \n  row.DT && row.DT.toString().toLowerCase().includes(\"nom client\")\n);\n\nif (!clientRow) {\n  // Log available rows for debugging\n  const availableRows = data.slice(0, 5).map((row, idx) => \n    `Row ${idx}: DT=\"${row.DT || 'N/A'}\"`\n  ).join(', ');\n  \n  throw new Error(\n    `EXTRACTION_ERROR: Row with \"Nom client\" not found in Excel file. ` +\n    `Available rows: ${availableRows}. ` +\n    `Please ensure the Excel file has a row with \"Nom client \" in column B.`\n  );\n}\n\n// Get all values from this row as an array\nconst rowValues = Object.values(clientRow);\n\nif (rowValues.length < 3) {\n  throw new Error(\n    `EXTRACTION_ERROR: Not enough columns in client row. ` +\n    `Expected at least 3 columns, found ${rowValues.length}. ` +\n    `Row structure: ${JSON.stringify(Object.keys(clientRow))}`\n  );\n}\n\n// Column C is the 3rd column (index 2)\nclientName = rowValues[2];\n\n// If empty, try to find first non-empty value after index 1\nif (!clientName || clientName.toString().trim() === \"\") {\n  const nonEmptyValues = rowValues.slice(2).filter(v => v && v.toString().trim() !== \"\");\n  \n  if (nonEmptyValues.length > 0) {\n    clientName = nonEmptyValues[0];\n    console.log(`⚠️  Column C was empty, used first non-empty column: \"${clientName}\"`);\n  } else {\n    throw new Error(\n      'EXTRACTION_ERROR: Client name is empty in all columns after column B. ' +\n      'Please ensure the client name is filled in the Excel file.'\n    );\n  }\n}\n\n// Validate client name is not just a number or special characters\nconst cleanTest = clientName.toString().trim().replace(/[^a-z0-9]/gi, '');\nif (cleanTest.length === 0) {\n  throw new Error(\n    `EXTRACTION_ERROR: Client name \"${clientName}\" contains no valid characters. ` +\n    'Please use alphanumeric characters for the client name.'\n  );\n}\n\nconst originalName = clientName.toString();\n\n// Nettoyer le nom du client (minuscules, espaces → tirets)\nclientName = clientName.toString()\n  .toLowerCase()\n  .trim()\n  .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\") // Enlever accents\n  .replace(/\\s+/g, '-') // Remplacer espaces par -\n  .replace(/[^a-z0-9-]+/g, '-') // Remplacer caractères spéciaux par -\n  .replace(/-+/g, '-') // Remplacer tirets multiples par un seul\n  .replace(/^-+|-+$/g, ''); // Enlever - au début/fin\n\n// Final validation\nif (!clientName || clientName === '-') {\n  throw new Error(\n    `EXTRACTION_ERROR: Client name \"${originalName}\" could not be cleaned properly. ` +\n    'Please use a valid client name with letters or numbers.'\n  );\n}\n\nconsole.log(`✅ Client name extracted successfully: \"${originalName}\" → \"${clientName}\"`);\n\n// Retourner les données avec le nom du client\nreturn [{\n  json: {\n    ...data,\n    clientName: clientName,\n    siteCode: `mtq-3cx-${clientName}-1`,\n    extractionSuccess: true,\n    originalClientName: originalName\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2128,
+        992
+      ],
+      "id": "9d2d0c44-41ae-47f3-bce9-f23a8719c659",
+      "name": "Extract Client Name",
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
     }
   ],
   "pinData": {},
@@ -460,7 +538,7 @@
       "main": [
         [
           {
-            "node": "Extract Client Name",
+            "node": "Validate Input Data",
             "type": "main",
             "index": 0
           }
@@ -620,17 +698,6 @@
         ]
       ]
     },
-    "Extract Client Name": {
-      "main": [
-        [
-          {
-            "node": "Generate BLF XML",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "CSV 3CX": {
       "main": [
         [
@@ -652,14 +719,57 @@
           }
         ]
       ]
+    },
+    "Validate Input Data1": {
+      "main": [
+        []
+      ]
+    },
+    "Validate Input Data": {
+      "main": [
+        [
+          {
+            "node": "Extract Client Name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'Telegram Error Monitor'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Client Name": {
+      "main": [
+        [
+          {
+            "node": "Generate BLF XML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'Telegram Error Monitor'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": true
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "SP9XZTobyCIX1gxF"
   },
-  "versionId": "6f694b05-b3eb-4644-a36f-a910fde3b367",
+  "versionId": "58c26da2-a679-430f-8af7-b168f82ce895",
   "meta": {
     "templateCredsSetupCompleted": true
   },
