@@ -7,7 +7,7 @@
       "typeVersion": 1,
       "position": [
         -3456,
-        1264
+        1016
       ],
       "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
       "name": "When clicking ‘Execute workflow’"
@@ -24,7 +24,7 @@
       "typeVersion": 1,
       "position": [
         -2784,
-        1360
+        1112
       ],
       "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
       "name": "Extract dtx",
@@ -38,8 +38,8 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -2592,
-        1360
+        -2560,
+        1112
       ],
       "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
       "name": "Aggregate"
@@ -64,7 +64,7 @@
       "typeVersion": 3,
       "position": [
         -3232,
-        1264
+        1016
       ],
       "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
       "name": "📋 Get DTX",
@@ -89,7 +89,7 @@
       "typeVersion": 3,
       "position": [
         -3008,
-        1264
+        1016
       ],
       "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
       "name": "⬇️ Download DTX",
@@ -107,8 +107,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -736,
-        1168
+        -960,
+        992
       ],
       "id": "6aaf8db8-5612-44d5-8c15-145b296b5fae",
       "name": "YMCS Format"
@@ -126,8 +126,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -512,
-        1168
+        -736,
+        992
       ],
       "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
       "name": "Convert File & Download"
@@ -143,7 +143,7 @@
       "typeVersion": 2.1,
       "position": [
         -3008,
-        1456
+        1208
       ],
       "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
       "name": "Webhook",
@@ -157,7 +157,7 @@
       "typeVersion": 1.4,
       "position": [
         160,
-        1264
+        1280
       ],
       "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
       "name": "Respond to Webhook"
@@ -167,8 +167,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -288,
-        1264
+        -512,
+        1088
       ],
       "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
       "name": "Merge"
@@ -192,7 +192,7 @@
       "typeVersion": 1.3,
       "position": [
         608,
-        1264
+        1280
       ],
       "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
       "name": "Call 'Telegram Notification Service'1"
@@ -204,8 +204,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1664,
-        1264
+        -1888,
+        1088
       ],
       "id": "e2a3a9f3-6f09-4171-ba1d-ae90ed041c4a",
       "name": "Generate BLF XML"
@@ -219,8 +219,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -512,
-        1360
+        -736,
+        1184
       ],
       "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
       "name": "Convert to File"
@@ -235,7 +235,7 @@
       "typeVersion": 1,
       "position": [
         -3536,
-        1024
+        808
       ],
       "id": "3897658d-7f5b-47e4-985c-caccb9cbbaa4",
       "name": "Sticky Note"
@@ -250,8 +250,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1456,
-        688
+        -1792,
+        512
       ],
       "id": "70cc28b8-dfa7-4c30-92dc-c1c0a5cbe570",
       "name": "Sticky Note1"
@@ -263,8 +263,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1024,
-        1360
+        -1248,
+        1184
       ],
       "id": "e60759b1-ead0-4260-af48-3e441ce369c9",
       "name": "3CX Format"
@@ -277,7 +277,7 @@
       "typeVersion": 2,
       "position": [
         -64,
-        1264
+        1280
       ],
       "id": "85fad3fa-ae2e-4158-a923-def4f904e922",
       "name": "Files to bas64"
@@ -285,14 +285,14 @@
     {
       "parameters": {
         "content": "## 📤 ENVOI DES FICHIERS\n\n**Conversion Base64** :\n- CSV 3CX → Base64\n- Excel YMCS → Base64\n\n**Réponse Webhook** :\n- JSON avec 2 fichiers encodés\n- Timestamp\n- Status success\n\n**Format** :\n{\n  \"success\": true,\n  \"files\": {\n    \"csv_3cx\": { \"filename\": \"...\", \"data\": \"...\" },\n    \"xlsx_ymcs\": { \"filename\": \"...\", \"data\": \"...\" }\n  }\n}\n",
-        "height": 592,
-        "width": 480
+        "height": 800,
+        "width": 576
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -144,
-        832
+        -416,
+        640
       ],
       "id": "42f626ad-a923-4c58-bd11-fef8987eb1ab",
       "name": "Sticky Note2"
@@ -307,8 +307,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        352,
-        976
+        688,
+        800
       ],
       "id": "fb29806a-40b7-431e-8345-d72b4f72b606",
       "name": "Sticky Note3"
@@ -322,8 +322,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2608,
-        960
+        -2600,
+        712
       ],
       "id": "86c32899-55d9-4d6e-8e6b-c3d77a2e7c08",
       "name": "Sticky Note4"
@@ -335,8 +335,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -736,
-        1360
+        -960,
+        1184
       ],
       "id": "c0b6e817-3015-42c0-9a03-584f00078eba",
       "name": "Add Constant Columns"
@@ -349,7 +349,7 @@
       "typeVersion": 2,
       "position": [
         384,
-        1264
+        1280
       ],
       "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
       "name": "Parse CSV"
@@ -374,8 +374,8 @@
       "type": "@n8n/n8n-nodes-langchain.anthropic",
       "typeVersion": 1,
       "position": [
-        -1440,
-        1360
+        -1664,
+        1184
       ],
       "id": "424878b1-0c3f-4d6b-86de-5953f9ddcb02",
       "name": "CSV 3CX",
@@ -406,8 +406,8 @@
       "type": "@n8n/n8n-nodes-langchain.anthropic",
       "typeVersion": 1,
       "position": [
-        -1088,
-        1168
+        -1312,
+        992
       ],
       "id": "11578847-4761-41b3-b3e7-7001f8e1f96f",
       "name": "XLSX YMCS",
@@ -420,74 +420,13 @@
     },
     {
       "parameters": {
-        "jsCode": " // ============================================\n  // DATA VALIDATION\n  // Validates the extracted Excel data structure\n  // ============================================\n\n  const data = $input.first().json.data;\n\n  // Check 1: Data exists\n  if (!data) {\n    throw new Error('VALIDATION_ERROR: No data extracted from Excel file. The file may be empty or corrupted.');\n  }\n\n  // Check 2: Is array\n  if (!Array.isArray(data)) {\n    throw new Error(`VALIDATION_ERROR: Invalid data format. Expected array, got ${typeof data}.`);\n  }\n\n  // Check 3: Has minimum rows\n  if (data.length < 5) {\n    throw new Error(\n      `VALIDATION_ERROR: File has only ${data.length} rows. ` +\n      'Expected at least 5 rows (headers + client info + data rows).'\n    );\n  }\n\n  // Check 4: Has required structure\n  const firstRow = data[0];\n  if (!firstRow || typeof firstRow !== 'object') {\n    throw new Error('VALIDATION_ERROR: First row has invalid structure.');\n  }\n\n  // Check 5: Has DT column\n  const hasDTColumn = data.some(row => row.DT !== undefined);\n  if (!hasDTColumn) {\n    throw new Error(\n      'VALIDATION_ERROR: Excel file missing required \"DT\" column. ' +\n      'Please ensure you are uploading the correct DTX template file.'\n    );\n  }\n\n  console.log(`✅ Data validation passed: ${data.length} rows, structure OK`);\n\n  // Pass through the data unchanged\n  return $input.all();\n"
+        "jsCode": "// ============================================\n// VALIDATION DES DONNÉES D'ENTRÉE\n// Valide la structure des données extraites du fichier Excel\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Check 1: Data exists\nif (!data) {\n  throw new Error('❌ VALIDATION ERROR: Aucune donnée extraite du fichier Excel. Le fichier est peut-être vide ou corrompu.');\n}\n\n// Check 2: Is array\nif (!Array.isArray(data)) {\n  throw new Error(`❌ VALIDATION ERROR: Format de données invalide. Type reçu: ${typeof data}, tableau attendu.`);\n}\n\n// Check 3: Has minimum rows\nif (data.length < 5) {\n  throw new Error(\n    `❌ VALIDATION ERROR: Le fichier ne contient que ${data.length} lignes.\\n` +\n    'Au moins 5 lignes sont attendues (en-têtes + infos client + lignes de données).'\n  );\n}\n\n// Check 4: Has required structure\nconst firstRow = data[0];\nif (!firstRow || typeof firstRow !== 'object') {\n  throw new Error('❌ VALIDATION ERROR: La première ligne a une structure invalide.');\n}\n\n// Check 5: Has DT column\nconst hasDTColumn = data.some(row => row.DT !== undefined);\nif (!hasDTColumn) {\n  throw new Error(\n    '❌ VALIDATION ERROR: Le fichier Excel ne contient pas la colonne \"DT\" requise.\\n' +\n    'Assurez-vous d\\'utiliser le bon fichier template DTX.'\n  );\n}\n\nconsole.log(`✅ Validation réussie: ${data.length} lignes, structure OK`);\n\n// Pass through the data unchanged\nreturn $input.all();\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3456,
-        1680
-      ],
-      "id": "c2c766c8-20e9-4531-ae24-1b0d0fffe319",
-      "name": "Validate Input Data1"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "SP9XZTobyCIX1gxF",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/SP9XZTobyCIX1gxF",
-          "cachedResultName": "Telegram Error Monitor"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {}
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        -2272,
-        1360
-      ],
-      "id": "049f8def-63c0-4016-9ebd-a940d495fe4c",
-      "name": "Call 'Telegram Error Monitor'"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "SP9XZTobyCIX1gxF",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/SP9XZTobyCIX1gxF",
-          "cachedResultName": "Telegram Error Monitor"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {}
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        -1968,
-        1184
-      ],
-      "id": "84f21f4d-ab5c-4953-835b-4ad43d44f498",
-      "name": "Call 'Telegram Error Monitor'1"
-    },
-    {
-      "parameters": {
-        "jsCode": "// ============================================\n// DATA VALIDATION\n// Validates the extracted Excel data structure\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Check 1: Data exists\nif (!data) {\n  throw new Error('VALIDATION_ERROR: No data extracted from Excel file. The file may be empty or corrupted.');\n}\n\n// Check 2: Is array\nif (!Array.isArray(data)) {\n  throw new Error(`VALIDATION_ERROR: Invalid data format. Expected array, got ${typeof data}.`);\n}\n\n// Check 3: Has minimum rows\nif (data.length < 5) {\n  throw new Error(\n    `VALIDATION_ERROR: File has only ${data.length} rows. ` +\n    'Expected at least 5 rows (headers + client info + data rows).'\n  );\n}\n\n// Check 4: Has required structure\nconst firstRow = data[0];\nif (!firstRow || typeof firstRow !== 'object') {\n  throw new Error('VALIDATION_ERROR: First row has invalid structure.');\n}\n\n// Check 5: Has DT column\nconst hasDTColumn = data.some(row => row.DT !== undefined);\nif (!hasDTColumn) {\n  throw new Error(\n    'VALIDATION_ERROR: Excel file missing required \"DT\" column. ' +\n    'Please ensure you are uploading the correct DTX template file.'\n  );\n}\n\nconsole.log(`✅ Data validation passed: ${data.length} rows, structure OK`);\n\n// Pass through the data unchanged\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -2448,
-        1360
+        -2336,
+        1112
       ],
       "id": "7df616b5-e61c-454c-83a6-d04541a5c47a",
       "name": "Validate Input Data",
@@ -496,18 +435,196 @@
     },
     {
       "parameters": {
-        "jsCode": "// ============================================\n// EXTRACTION NOM CLIENT DEPUIS CELLULE C (3ème colonne)\n// Version: Position-based with comprehensive error handling\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Validation: Check if data exists\nif (!data) {\n  throw new Error('EXTRACTION_ERROR: No data received from previous node');\n}\n\nif (!Array.isArray(data)) {\n  throw new Error('EXTRACTION_ERROR: Data is not an array. Received type: ' + typeof data);\n}\n\nif (data.length === 0) {\n  throw new Error('EXTRACTION_ERROR: Data array is empty. The Excel file may be empty or corrupted.');\n}\n\nlet clientName = null;\n\n// Find the row containing \"Nom client \" in the DT column\nconst clientRow = data.find(row => \n  row.DT && row.DT.toString().toLowerCase().includes(\"nom client\")\n);\n\nif (!clientRow) {\n  // Log available rows for debugging\n  const availableRows = data.slice(0, 5).map((row, idx) => \n    `Row ${idx}: DT=\"${row.DT || 'N/A'}\"`\n  ).join(', ');\n  \n  throw new Error(\n    `EXTRACTION_ERROR: Row with \"Nom client\" not found in Excel file. ` +\n    `Available rows: ${availableRows}. ` +\n    `Please ensure the Excel file has a row with \"Nom client \" in column B.`\n  );\n}\n\n// Get all values from this row as an array\nconst rowValues = Object.values(clientRow);\n\nif (rowValues.length < 3) {\n  throw new Error(\n    `EXTRACTION_ERROR: Not enough columns in client row. ` +\n    `Expected at least 3 columns, found ${rowValues.length}. ` +\n    `Row structure: ${JSON.stringify(Object.keys(clientRow))}`\n  );\n}\n\n// Column C is the 3rd column (index 2)\nclientName = rowValues[2];\n\n// If empty, try to find first non-empty value after index 1\nif (!clientName || clientName.toString().trim() === \"\") {\n  const nonEmptyValues = rowValues.slice(2).filter(v => v && v.toString().trim() !== \"\");\n  \n  if (nonEmptyValues.length > 0) {\n    clientName = nonEmptyValues[0];\n    console.log(`⚠️  Column C was empty, used first non-empty column: \"${clientName}\"`);\n  } else {\n    throw new Error(\n      'EXTRACTION_ERROR: Client name is empty in all columns after column B. ' +\n      'Please ensure the client name is filled in the Excel file.'\n    );\n  }\n}\n\n// Validate client name is not just a number or special characters\nconst cleanTest = clientName.toString().trim().replace(/[^a-z0-9]/gi, '');\nif (cleanTest.length === 0) {\n  throw new Error(\n    `EXTRACTION_ERROR: Client name \"${clientName}\" contains no valid characters. ` +\n    'Please use alphanumeric characters for the client name.'\n  );\n}\n\nconst originalName = clientName.toString();\n\n// Nettoyer le nom du client (minuscules, espaces → tirets)\nclientName = clientName.toString()\n  .toLowerCase()\n  .trim()\n  .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\") // Enlever accents\n  .replace(/\\s+/g, '-') // Remplacer espaces par -\n  .replace(/[^a-z0-9-]+/g, '-') // Remplacer caractères spéciaux par -\n  .replace(/-+/g, '-') // Remplacer tirets multiples par un seul\n  .replace(/^-+|-+$/g, ''); // Enlever - au début/fin\n\n// Final validation\nif (!clientName || clientName === '-') {\n  throw new Error(\n    `EXTRACTION_ERROR: Client name \"${originalName}\" could not be cleaned properly. ` +\n    'Please use a valid client name with letters or numbers.'\n  );\n}\n\nconsole.log(`✅ Client name extracted successfully: \"${originalName}\" → \"${clientName}\"`);\n\n// Retourner les données avec le nom du client\nreturn [{\n  json: {\n    ...data,\n    clientName: clientName,\n    siteCode: `mtq-3cx-${clientName}-1`,\n    extractionSuccess: true,\n    originalClientName: originalName\n  }\n}];"
+        "jsCode": "// ============================================\n// EXTRACTION NOM CLIENT DEPUIS CELLULE C (3ème colonne)\n// Version: Position-based with detailed error messages\n// ============================================\n\nconst data = $input.first().json.data;\n\n// Validation: Check if data exists\nif (!data) {\n  throw new Error('❌ EXTRACTION ERROR: Aucune donnée reçue du nœud précédent. Le fichier Excel est peut-être vide ou corrompu.');\n}\n\nif (!Array.isArray(data)) {\n  throw new Error(`❌ EXTRACTION ERROR: Format de données invalide. Type reçu: ${typeof data}. Un tableau était attendu.`);\n}\n\nif (data.length === 0) {\n  throw new Error('❌ EXTRACTION ERROR: Le tableau de données est vide. Le fichier Excel ne contient aucune donnée.');\n}\n\nlet clientName = null;\n\n// Find the row containing \"Nom client \" in the DT column\nconst clientRow = data.find(row =>\n  row.DT && row.DT.toString().toLowerCase().includes(\"nom client\")\n);\n\nif (!clientRow) {\n  // Log available rows for debugging\n  const availableRows = data.slice(0, 5).map((row, idx) =>\n    `Ligne ${idx}: DT=\"${row.DT || 'N/A'}\"`\n  ).join(', ');\n\n  throw new Error(\n    `❌ EXTRACTION ERROR: La ligne \"Nom client\" est introuvable dans le fichier Excel.\\n\\n` +\n    `Lignes disponibles: ${availableRows}\\n\\n` +\n    `Assurez-vous que le fichier Excel contient une ligne avec \"Nom client\" dans la colonne B.`\n  );\n}\n\n// Get all values from this row as an array\nconst rowValues = Object.values(clientRow);\n\nif (rowValues.length < 3) {\n  throw new Error(\n    `❌ EXTRACTION ERROR: Pas assez de colonnes dans la ligne client.\\n` +\n    `${rowValues.length} colonnes trouvées, au moins 3 attendues.\\n` +\n    `Structure: ${JSON.stringify(Object.keys(clientRow))}`\n  );\n}\n\n// Column C is the 3rd column (index 2)\nclientName = rowValues[2];\n\n// If empty, try to find first non-empty value after index 1\nif (!clientName || clientName.toString().trim() === \"\") {\n  const nonEmptyValues = rowValues.slice(2).filter(v => v && v.toString().trim() !== \"\");\n\n  if (nonEmptyValues.length > 0) {\n    clientName = nonEmptyValues[0];\n    console.log(`⚠️ Colonne C vide, utilisation de la première colonne non vide: \"${clientName}\"`);\n  } else {\n    throw new Error(\n      '❌ EXTRACTION ERROR: Le nom du client est vide dans toutes les colonnes après la colonne B.\\n' +\n      'Veuillez remplir le nom du client dans le fichier Excel.'\n    );\n  }\n}\n\n// Validate client name is not just a number or special characters\nconst cleanTest = clientName.toString().trim().replace(/[^a-z0-9]/gi, '');\nif (cleanTest.length === 0) {\n  throw new Error(\n    `❌ EXTRACTION ERROR: Le nom du client \"${clientName}\" ne contient aucun caractère valide.\\n` +\n    'Veuillez utiliser des caractères alphanumériques.'\n  );\n}\n\nconst originalName = clientName.toString();\n\n// Nettoyer le nom du client (minuscules, espaces → tirets)\nclientName = clientName.toString()\n  .toLowerCase()\n  .trim()\n  .normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\") // Enlever accents\n  .replace(/\\s+/g, '-') // Remplacer espaces par -\n  .replace(/[^a-z0-9-]+/g, '-') // Remplacer caractères spéciaux par -\n  .replace(/-+/g, '-') // Remplacer tirets multiples par un seul\n  .replace(/^-+|-+$/g, ''); // Enlever - au début/fin\n\n// Final validation\nif (!clientName || clientName === '-') {\n  throw new Error(\n    `❌ EXTRACTION ERROR: Le nom du client \"${originalName}\" n'a pas pu être nettoyé correctement.\\n` +\n    'Veuillez utiliser un nom valide avec des lettres ou des chiffres.'\n  );\n}\n\nconsole.log(`✅ Nom client extrait avec succès: \"${originalName}\" → \"${clientName}\"`);\n\n// Retourner les données avec le nom du client\nreturn [{\n  json: {\n    ...data,\n    clientName: clientName,\n    siteCode: `mtq-3cx-${clientName}-1`,\n    extractionSuccess: true,\n    originalClientName: originalName\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2128,
-        992
+        -2112,
+        920
       ],
       "id": "9d2d0c44-41ae-47f3-bce9-f23a8719c659",
       "name": "Extract Client Name",
       "continueOnFail": true,
       "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        896
+      ],
+      "id": "e1d5e5e4-739e-4f1c-909c-79fbe33c93f1",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n  // ============================================\n  // CHECK FOR ERRORS + COLLECT ERROR INFO\n  // Détecte les erreurs et collecte toutes les informations\n  // ============================================\n\n  const items = $input.all();\n  const hasError = items.some(item => item.error !== undefined);\n\n  if (hasError) {\n    const errorItem = items.find(item => item.error !== undefined);\n    const error = errorItem.error;\n\n    let errorMessage = 'Une erreur est survenue lors du traitement du fichier.';\n    if (error.message) {\n      errorMessage = error.message;\n    }\n\n    let errorType = 'UNKNOWN_ERROR';\n    if (errorMessage.includes('EXTRACTION ERROR')) {\n      errorType = 'EXTRACTION_ERROR';\n    } else if (errorMessage.includes('VALIDATION ERROR')) {\n      errorType = 'VALIDATION_ERROR';\n    } else if (errorMessage.includes('AI') || errorMessage.includes('OpenAI')) {\n      errorType = 'AI_ERROR';\n    }\n\n    // Get the node name that failed (from error context)\n    const failedNode = error.node?.name || error.context?.nodeName || 'Unknown node';\n\n    console.error(`❌ Erreur détectée: ${errorType} - ${errorMessage}`);\n\n    return [{\n      json: {\n        hasError: true,\n        success: false,\n        errorType: errorType,\n        message: errorMessage.replace('❌ ', ''),\n        timestamp: new Date().toISOString(),\n        // Workflow context for Telegram\n        workflowName: $workflow.name,\n        workflowId: $workflow.id,\n        failedNode: failedNode,\n        executionId: $execution.id,\n        executionMode: $execution.mode\n      }\n    }];\n  }\n\n  // No error, continue normally\n  console.log('✅ Aucune erreur détectée, traitement normal');\n\n  return [{\n    json: {\n      hasError: false,\n      ...items[0].json\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        1088
+      ],
+      "id": "5774832c-e652-44d9-85c3-b37f59c20814",
+      "name": "Check for errors",
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// ERROR RESPONSE TO WEBHOOK\n// Formate la réponse d'erreur pour le webhook\n// ============================================\n\nconst errorData = $input.first().json;\n\nreturn [{\n  json: {\n    success: false,\n    error: true,\n    errorType: errorData.errorType,\n    message: errorData.message,\n    timestamp: errorData.timestamp,\n    files: {\n      csv_3cx: null,\n      xlsx_ymcs: null\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        992
+      ],
+      "id": "77d3583c-dd3d-43fb-bfbb-6bcbf2ad04e3",
+      "name": "Error response to webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n  // PREPARE TELEGRAM ERROR NOTIFICATION\n  // Formate le message d'erreur pour Telegram\n  // ============================================\n\n  const errorData = $input.first().json;\n\n  // Build detailed error message for Telegram\n  let telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\n  telegramMessage += `📋 Workflow: *${errorData.workflowName || 'DTX Import'}*\\n`;\n  telegramMessage += `🔗 ID: \\`${errorData.workflowId || 'unknown'}\\`\\n`;\n  telegramMessage += `📍 Node: *${errorData.failedNode || 'Unknown'}*\\n`;\n  telegramMessage += `🔄 Mode: ${errorData.executionMode || 'unknown'}\\n`;\n  telegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorData.message}\\n\\`\\`\\``;\n  telegramMessage += `\\n\\n🆔 Execution ID: \\`${errorData.executionId || 'unknown'}\\``;\n  telegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\n  return [{\n    json: {\n      message: telegramMessage,\n      chatId: '5992469226'\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        992
+      ],
+      "id": "e3eff764-49e4-44f7-981a-cc4709be84a1",
+      "name": "Prepare Telergam error"
+    },
+    {
+      "parameters": {
+        "chatId": "{{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        1088
+      ],
+      "id": "786acecb-8fbf-4a47-ba09-3234e03f4bc2",
+      "name": "Send a text message",
+      "webhookId": "17c0bd0b-2755-4184-9150-05b4c6b7584c",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1600,
+        656
+      ],
+      "id": "196153eb-9be8-4fd8-8e47-a7ec5f8377a9",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n  // PREPARE TELEGRAM ERROR NOTIFICATION\n  // Formate le message d'erreur pour Telegram\n  // ============================================\n\n  const errorData = $input.first().json;\n\n  // Build detailed error message for Telegram\n  let telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\n  telegramMessage += `📋 Workflow: *${errorData.workflowName || 'DTX Import'}*\\n`;\n  telegramMessage += `🔗 ID: \\`${errorData.workflowId || 'unknown'}\\`\\n`;\n  telegramMessage += `📍 Node: *${errorData.failedNode || 'Unknown'}*\\n`;\n  telegramMessage += `🔄 Mode: ${errorData.executionMode || 'unknown'}\\n`;\n  telegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorData.message}\\n\\`\\`\\``;\n  telegramMessage += `\\n\\n🆔 Execution ID: \\`${errorData.executionId || 'unknown'}\\``;\n  telegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\n  return [{\n    json: {\n      message: telegramMessage,\n      chatId: '5992469226'\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1888,
+        752
+      ],
+      "id": "b667f411-1109-4dd3-993c-0a41bdbed181",
+      "name": "Prepare Telergam error1"
+    },
+    {
+      "parameters": {
+        "chatId": "5992469226",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        848
+      ],
+      "id": "8cf8465e-94aa-4566-8b13-fe674b1bdfcb",
+      "name": "Send a text message1",
+      "webhookId": "17c0bd0b-2755-4184-9150-05b4c6b7584c",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1888,
+        1280
+      ],
+      "id": "ac49f65a-c869-4fcd-8c0c-43d5938641be",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n  // PREPARE TELEGRAM ERROR NOTIFICATION\n  // Formate le message d'erreur pour Telegram\n  // ============================================\n\n  const errorData = $input.first().json;\n\n  // Build detailed error message for Telegram\n  let telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\n  telegramMessage += `📋 Workflow: *${errorData.workflowName || 'DTX Import'}*\\n`;\n  telegramMessage += `🔗 ID: \\`${errorData.workflowId || 'unknown'}\\`\\n`;\n  telegramMessage += `📍 Node: *${errorData.failedNode || 'Unknown'}*\\n`;\n  telegramMessage += `🔄 Mode: ${errorData.executionMode || 'unknown'}\\n`;\n  telegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorData.message}\\n\\`\\`\\``;\n  telegramMessage += `\\n\\n🆔 Execution ID: \\`${errorData.executionId || 'unknown'}\\``;\n  telegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\n  return [{\n    json: {\n      message: telegramMessage,\n      chatId: '5992469226'\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2112,
+        1376
+      ],
+      "id": "63fce592-65da-4d9c-b37e-ad7bb8e6a3a0",
+      "name": "Prepare Telergam error2"
+    },
+    {
+      "parameters": {
+        "chatId": "{{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1888,
+        1472
+      ],
+      "id": "52f09b80-d480-4532-84f8-b923aa811ce8",
+      "name": "Send a text message2",
+      "webhookId": "17c0bd0b-2755-4184-9150-05b4c6b7584c",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -604,7 +721,7 @@
       "main": [
         [
           {
-            "node": "Files to bas64",
+            "node": "Check for errors",
             "type": "main",
             "index": 0
           }
@@ -720,11 +837,6 @@
         ]
       ]
     },
-    "Validate Input Data1": {
-      "main": [
-        []
-      ]
-    },
     "Validate Input Data": {
       "main": [
         [
@@ -736,7 +848,7 @@
         ],
         [
           {
-            "node": "Call 'Telegram Error Monitor'",
+            "node": "Prepare Telergam error2",
             "type": "main",
             "index": 0
           }
@@ -754,7 +866,94 @@
         ],
         [
           {
-            "node": "Call 'Telegram Error Monitor'1",
+            "node": "Prepare Telergam error1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for errors": {
+      "main": [
+        [
+          {
+            "node": "Error response to webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Files to bas64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error response to webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Telergam error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Telergam error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        []
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Prepare Telergam error1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Telergam error2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message2",
             "type": "main",
             "index": 0
           }
@@ -766,10 +965,9 @@
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": true,
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "SP9XZTobyCIX1gxF"
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "58c26da2-a679-430f-8af7-b168f82ce895",
+  "versionId": "e3524226-5add-4166-810b-409313a4a5e2",
   "meta": {
     "templateCredsSetupCompleted": true
   },
