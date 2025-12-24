@@ -1,0 +1,912 @@
+{
+  "name": "AJNA972 - Full Content Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2272,
+        288
+      ],
+      "id": "40173376-feb5-44b6-9788-e916fd8d6fee",
+      "notes": "Déclenchement quotidien à 8h (heure Martinique)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q",
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 644919882,
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit#gid=644919882"
+        },
+        "options": {}
+      },
+      "name": "Google Sheets - Lire Calendrier",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -2080,
+        288
+      ],
+      "id": "9a448e42-ee5c-45c2-b7c4-623987bc2495",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Récupère toutes les lignes du calendrier éditorial"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.Date }}",
+              "operation": "equals",
+              "value2": "={{ $now.toFormat('yyyy-MM-dd') }}"
+            },
+            {
+              "value1": "={{ $json.Statut }}",
+              "operation": "equals",
+              "value2": "Programmé"
+            }
+          ]
+        }
+      },
+      "name": "Filter - Date Aujourd'hui + Programmé",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [
+        -1872,
+        288
+      ],
+      "id": "75489614-e9e2-4bdd-90c0-547a3fba4769",
+      "notes": "Garde seulement les posts du jour avec statut Programmé"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Image_URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "name": "HTTP Request - Télécharger Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1680,
+        288
+      ],
+      "id": "45f6844f-ff16-454c-86ff-d5bfc01c184a",
+      "notes": "Télécharge l'image depuis Google Drive"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Facebook - Publier Post",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        176
+      ],
+      "id": "700ddb6f-ff15-4b1f-80ba-545e1fc757ef",
+      "notes": "Publie le post avec image sur la page Facebook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Instagram - Créer Container Media",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        384
+      ],
+      "id": "36e04555-125b-4fa4-b8dd-d6dd92e6e231",
+      "notes": "Étape 1: Créer le container media Instagram"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Instagram - Publier Media",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        384
+      ],
+      "id": "19a99d2c-7acf-40fc-b3a1-6e29d22f2af0",
+      "notes": "Étape 2: Publier le media sur Instagram"
+    },
+    {
+      "parameters": {},
+      "name": "Code - Préparer Mise à Jour",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        288
+      ],
+      "id": "4eb51a22-ec46-4a01-856b-b717f07b9ecf",
+      "notes": "Combine les résultats FB et IG pour la mise à jour"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "name": "Google Sheets - Mettre à Jour Statut",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -880,
+        288
+      ],
+      "id": "6bded422-db7c-442a-be7c-727289e08fa6",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Met à jour le statut et les IDs de post dans le Sheet"
+    },
+    {
+      "parameters": {},
+      "name": "Code - Log Succès",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        288
+      ],
+      "id": "c66a99a1-f0b1-4bc1-81a9-6f0445d15dd1",
+      "notes": "Log de confirmation de publication"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "name": "Google Sheets - Marquer Erreur",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -1072,
+        480
+      ],
+      "id": "382f39f6-8afb-4811-a412-e7cb0297bfc3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Marque comme Erreur en cas d'échec"
+    },
+    {
+      "parameters": {},
+      "name": "Code - Log Erreur",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        480
+      ],
+      "id": "c1113a3a-2955-4ef4-817f-4d7f964a4461",
+      "notes": "Log des erreurs de publication"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger - Daily 6AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2256,
+        -208
+      ],
+      "id": "e16642d7-99dd-492f-bd7d-10912266f95b"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q",
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 644919882,
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit#gid=644919882"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Heure",
+              "displayName": "Heure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Texte",
+              "displayName": "Texte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Image_URL",
+              "displayName": "Image_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Statut",
+              "displayName": "Statut",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FB_Post_ID",
+              "displayName": "FB_Post_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IG_Post_ID",
+              "displayName": "IG_Post_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reach",
+              "displayName": "Reach",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Engagement",
+              "displayName": "Engagement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Google Sheets - Read Today's Post",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -2032,
+        -208
+      ],
+      "id": "0965015e-c905-41bb-8b70-140fd470b682",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux/schnell",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.Prompt_Image }}\",\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 4,\n  \"num_images\": 1\n}",
+        "options": {}
+      },
+      "name": "FAL.ai - Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1824,
+        -208
+      ],
+      "id": "2dffa7ca-dfb5-444e-880e-b613e7c0a254",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mjuDPDxoMnH7N4yX",
+          "name": "FAL.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Fonction de préparation des données pour Facebook/Instagram\n// FAL.ai retourne directement l'URL de l'image\n\nconst items = $input.all();\n\nfor (const item of items) {\n  // FAL.ai retourne l'URL de l'image dans images[0].url\n  const imageUrl = item.json.images && item.json.images[0] ? item.json.images[0].url : null;\n  \n  if (!imageUrl) {\n    throw new Error('Pas d\\'URL d\\'image retournée par FAL.ai');\n  }\n  \n  // Récupérer le texte du post depuis Google Sheets\n  const fullText = item.json.Texte || '';\n  const hashtags = item.json.Hashtags || '';\n  \n  // Combiner texte et hashtags\n  const completeText = fullText + (hashtags ? '\\n\\n' + hashtags : '');\n  \n  // Stocker les données pour les étapes suivantes\n  item.json.generated_image_url = imageUrl;\n  item.json.full_text = completeText;\n  item.json.date = item.json.Date || '';\n}\n\nreturn items;"
+      },
+      "name": "Function - Prepare Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        -208
+      ],
+      "id": "e912f55b-0972-4001-89ce-d9b349056dcc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FB_PAGE_ID }}/photos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.generated_image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.full_text }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FB_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Facebook - Publish Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1376,
+        -304
+      ],
+      "id": "f53f6f3b-472d-42f9-b5f1-e3c693fff52e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.IG_ACCOUNT_ID }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.generated_image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.full_text }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FB_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Instagram - Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -1376,
+        -112
+      ],
+      "id": "4a1c5b38-57c0-46b4-ae21-1812b0dd22f3"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "name": "Wait 30s - IG Processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        -112
+      ],
+      "webhookId": "WEBHOOK_ID_2",
+      "id": "8e5305b5-16b0-45da-acfa-140917c07cb4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.IG_ACCOUNT_ID }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FB_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Instagram - Publish Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -944,
+        -112
+      ],
+      "id": "0469108b-6b01-494b-8e27-999ccb0787a8"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q",
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 644919882,
+          "mode": "list",
+          "cachedResultName": "calendrier_editorial_2026_01",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q/edit#gid=644919882"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Statut": "Publié",
+            "FB_Post_ID": "={{ $node[\"Facebook - Publish Post\"].json.id }}",
+            "IG_Post_ID": "={{ $node[\"Instagram - Publish Post\"].json.id }}",
+            "Image_URL": "={{ $node[\"Function - Prepare Data\"].json.generated_image_url }}",
+            "row_number": 0
+          },
+          "matchingColumns": [
+            "Date"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Heure",
+              "displayName": "Heure",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Texte",
+              "displayName": "Texte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Image_URL",
+              "displayName": "Image_URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Statut",
+              "displayName": "Statut",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "FB_Post_ID",
+              "displayName": "FB_Post_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "IG_Post_ID",
+              "displayName": "IG_Post_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reach",
+              "displayName": "Reach",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Engagement",
+              "displayName": "Engagement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Google Sheets - Update Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -720,
+        -208
+      ],
+      "id": "0d47ab4d-fc50-4db9-8906-412f53096f42",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Lire Calendrier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Lire Calendrier": {
+      "main": [
+        [
+          {
+            "node": "Filter - Date Aujourd'hui + Programmé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - Date Aujourd'hui + Programmé": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Télécharger Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Télécharger Image": {
+      "main": [
+        [
+          {
+            "node": "Facebook - Publier Post",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram - Créer Container Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook - Publier Post": {
+      "main": [
+        [
+          {
+            "node": "Code - Préparer Mise à Jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Créer Container Media": {
+      "main": [
+        [
+          {
+            "node": "Instagram - Publier Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Publier Media": {
+      "main": [
+        [
+          {
+            "node": "Code - Préparer Mise à Jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Préparer Mise à Jour": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Mettre à Jour Statut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Mettre à Jour Statut": {
+      "main": [
+        [
+          {
+            "node": "Code - Log Succès",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Daily 6AM": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read Today's Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read Today's Post": {
+      "main": [
+        [
+          {
+            "node": "FAL.ai - Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAL.ai - Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Function - Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Prepare Data": {
+      "main": [
+        [
+          {
+            "node": "Facebook - Publish Post",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Instagram - Create Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Create Container": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s - IG Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s - IG Processing": {
+      "main": [
+        [
+          {
+            "node": "Instagram - Publish Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook - Publish Post": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Publish Post": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Update Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7101cae0-7dab-409e-8f7c-adce8b3fecd5",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "NpdyhJjEgtK2abKO",
+  "tags": []
+}
