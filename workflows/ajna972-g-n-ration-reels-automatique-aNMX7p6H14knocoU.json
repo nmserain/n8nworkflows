@@ -1,0 +1,287 @@
+{
+  "name": "AJNA972 - Génération Reels Automatique",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ],
+      "notes": "Déclenche tous les jours à 7h (heure Martinique)"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1TrshhEo2aFWdQyeN4p9ZUcmO1mch_dsw9SaKak_i18Q",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Calendrier",
+          "mode": "name"
+        },
+        "options": {
+          "dataStartRow": 2
+        }
+      },
+      "id": "google-sheets-read",
+      "name": "Lire Calendrier Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        450,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NQoVLyxxlalzQcRn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-date",
+              "leftValue": "={{ $json.Date }}",
+              "rightValue": "={{ $today.format('YYYY-MM-DD') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "condition-status",
+              "leftValue": "={{ $json.Statut }}",
+              "rightValue": "Programmé Reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-today-reel",
+      "name": "Filter: Reel du jour",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ],
+      "notes": "Ne garde que les Reels programmés pour aujourd'hui"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$credentials.apiKey}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\"model\": \"claude-3-5-haiku-20241022\", \"max_tokens\": 500, \"messages\": [{\"role\": \"user\", \"content\": \"Tu es expert en Feng Shui pour AJNA972 (Martinique).\\n\\nContexte: Le post original est : \\\"\" + $json.Texte + \"\\\"\\n\\nTâche: Crée un script vidéo de 10-12 secondes max pour un Reel Instagram.\\n\\nStructure OBLIGATOIRE:\\n- HOOK (2s): Question percutante ou stat choc [max 6 mots]\\n- CONSEIL (6s): Astuce Feng Shui concrète [max 15 mots]\\n- CTA (2s): Appel à l'action [max 8 mots]\\n\\nTon: Apaisant, expert, accessible\\nPublic: Particuliers Martinique stressés\\nContraintes:\\n- Pas de termes techniques complexes\\n- Langage simple et chaleureux\\n- Ancrage local si possible\\n\\nFormat de sortie JSON UNIQUEMENT (pas de markdown, pas d'explication):\\n{\\n  \\\"hook\\\": \\\"...\\\",\\n  \\\"conseil\\\": \\\"...\\\",\\n  \\\"cta\\\": \\\"Formations sur ajna972.fr\\\",\\n  \\\"mots_cles_pexels\\\": \\\"zen meditation nature\\\"\\n}\"}]}",
+        "options": {}
+      },
+      "id": "http-claude-api",
+      "name": "HTTP Request - Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        850,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mjuDPDxoMnH7N4yX",
+          "name": "FAL.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json.content[0].text;\nconst script = JSON.parse(claudeResponse);\n\nreturn {\n  hook: script.hook,\n  conseil: script.conseil,\n  cta: script.cta,\n  mots_cles_pexels: script.mots_cles_pexels,\n  texte_original: $('Lire Calendrier Google Sheets').item.json.Texte,\n  date_publication: $('Lire Calendrier Google Sheets').item.json.Date,\n  row_id: $('Lire Calendrier Google Sheets').item.json.row_number || 2\n};"
+      },
+      "id": "code-parse-script",
+      "name": "Parse Script JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ],
+      "notes": "Extrait les données du script"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.pexels.com/videos/search?query={{ $json.mots_cles_pexels }}&orientation=portrait&per_page=10",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-pexels-api",
+      "name": "Pexels API - Récupérer Vidéo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1250,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pexels-api-cred",
+          "name": "Pexels API"
+        }
+      },
+      "notes": "Récupère une vidéo zen de fond"
+    },
+    {
+      "parameters": {
+        "jsCode": "const videos = $input.item.json.videos;\nconst randomIndex = Math.floor(Math.random() * Math.min(5, videos.length));\nconst selectedVideo = videos[randomIndex];\n\nconst portraitFile = selectedVideo.video_files.find(f => \n  f.width === 1080 && f.height === 1920\n) || selectedVideo.video_files.find(f => \n  f.width < f.height\n) || selectedVideo.video_files[0];\n\nreturn {\n  ...($input.item.json),\n  video_url: portraitFile.link,\n  video_duration: selectedVideo.duration,\n  video_id: selectedVideo.id\n};"
+      },
+      "id": "code-select-video",
+      "name": "Sélectionner Vidéo Aléatoire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Lire Calendrier Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire Calendrier Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter: Reel du jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Reel du jour": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Script JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Script JSON": {
+      "main": [
+        [
+          {
+            "node": "Pexels API - Récupérer Vidéo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pexels API - Récupérer Vidéo": {
+      "main": [
+        [
+          {
+            "node": "Sélectionner Vidéo Aléatoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 3600,
+    "timezone": "UTC",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "f7380c89-12b0-45ef-8056-64d6dcd9b7bd",
+  "meta": null,
+  "id": "aNMX7p6H14knocoU",
+  "tags": []
+}
