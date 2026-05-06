@@ -1,0 +1,387 @@
+{
+  "name": "SocialForge_Publisher_Posts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        400
+      ],
+      "notes": "Tous les jours Ã  8h - vÃ©rifie s'il y a des posts Ã  publier"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "={{$env.AIRTABLE_BASE_ID}}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Contenus_SocialForge",
+          "mode": "name"
+        },
+        "filterByFormula": "AND({Status} = 'ValidÃ©', IS_SAME({Date_Publication}, TODAY(), 'day'))"
+      },
+      "id": "airtable-read-posts",
+      "name": "Airtable - Lire Posts ValidÃ©s",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        400
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tSAnycUaPX6c8NWJ",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "notes": "RÃ©cupÃ¨re les posts avec Status=ValidÃ© et Date_Publication=aujourd'hui"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-media-url",
+              "leftValue": "={{ $json.Media_URL }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-media",
+      "name": "Filter - VÃ©rifier Media",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        710,
+        400
+      ],
+      "notes": "VÃ©rifie que Media_URL est non vide avant publication"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PrÃ©parer la caption pour publication\nconst item = $input.item.json;\n\n// Combiner Texte + Hashtags\nconst texte = (item.Texte || '').trim();\nconst hashtags = (item.Hashtags || '').trim();\nconst caption = hashtags ? `${texte}\\n\\n${hashtags}` : texte;\n\n// Extraire l'URL du media\n// Media_URL peut Ãªtre une string directe ou un tableau Airtable\nlet mediaUrl = '';\nif (Array.isArray(item.Media_URL)) {\n  mediaUrl = item.Media_URL[0]?.url || item.Media_URL[0] || '';\n} else if (typeof item.Media_URL === 'string') {\n  mediaUrl = item.Media_URL;\n} else if (item.Media && Array.isArray(item.Media)) {\n  // Fallback: champ Media (attachment Airtable)\n  mediaUrl = item.Media[0]?.url || '';\n}\n\nreturn {\n  record_id: item.id || $input.item.json.id,\n  caption: caption,\n  media_url: mediaUrl,\n  texte: texte,\n  hashtags: hashtags,\n  date_publication: item.Date_Publication || '',\n  client_id: item.Client_ID || ''\n};"
+      },
+      "id": "code-prepare-publication",
+      "name": "Code - PrÃ©parer Publication",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        400
+      ],
+      "notes": "Combine Texte + Hashtags en caption, extrait Media_URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{$env.FB_API_VERSION || 'v18.0'}}/{{$env.FB_PAGE_ID}}/photos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.media_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FB_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "facebook-publish",
+      "name": "Facebook - Publier Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1170,
+        400
+      ],
+      "notes": "POST photo + caption sur la page Facebook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sauvegarder le FB Post ID et transmettre les donnÃ©es pour Instagram\nconst fbResult = $input.item.json;\nconst prepData = $('Code - PrÃ©parer Publication').first();\n\nreturn {\n  record_id: prepData.json.record_id,\n  caption: prepData.json.caption,\n  media_url: prepData.json.media_url,\n  fb_post_id: fbResult.id || fbResult.post_id || ''\n};"
+      },
+      "id": "code-save-fb-id",
+      "name": "Code - Sauvegarder FB ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        400
+      ],
+      "notes": "Sauvegarde le FB Post ID et prÃ©pare les donnÃ©es pour Instagram"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{$env.FB_API_VERSION || 'v18.0'}}/{{$env.IG_ACCOUNT_ID}}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.media_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FB_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "instagram-create-container",
+      "name": "Instagram - CrÃ©er Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1630,
+        400
+      ],
+      "notes": "CrÃ©e un media container Instagram (ne publie pas encore)"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-instagram",
+      "name": "Wait 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1860,
+        400
+      ],
+      "notes": "Attente pour le processing du container Instagram"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{$env.FB_API_VERSION || 'v18.0'}}/{{$env.IG_ACCOUNT_ID}}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FB_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "instagram-publish",
+      "name": "Instagram - Publier",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2090,
+        400
+      ],
+      "notes": "Publie le container Instagram"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "={{$env.AIRTABLE_BASE_ID}}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Contenus_SocialForge",
+          "mode": "name"
+        },
+        "id": "={{ $('Code - Sauvegarder FB ID').item.json.record_id }}",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "PubliÃ©",
+            "FB_Post_ID": "={{ $('Code - Sauvegarder FB ID').item.json.fb_post_id }}",
+            "IG_Post_ID": "={{ $json.id }}"
+          }
+        }
+      },
+      "id": "airtable-update-status",
+      "name": "Airtable - Mettre Ã  jour Statut",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2320,
+        400
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "tSAnycUaPX6c8NWJ",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "notes": "Met Ã  jour le record: Status=PubliÃ© + IDs Facebook/Instagram"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Lire Posts ValidÃ©s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable - Lire Posts ValidÃ©s": {
+      "main": [
+        [
+          {
+            "node": "Filter - VÃ©rifier Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter - VÃ©rifier Media": {
+      "main": [
+        [
+          {
+            "node": "Code - PrÃ©parer Publication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - PrÃ©parer Publication": {
+      "main": [
+        [
+          {
+            "node": "Facebook - Publier Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook - Publier Post": {
+      "main": [
+        [
+          {
+            "node": "Code - Sauvegarder FB ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Sauvegarder FB ID": {
+      "main": [
+        [
+          {
+            "node": "Instagram - CrÃ©er Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - CrÃ©er Container": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "Instagram - Publier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Publier": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Mettre Ã  jour Statut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Wvtp5SjEVchclKdY",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e3ce67e5-c545-476d-ba0f-fc5ea2e369ab",
+  "meta": null,
+  "id": "SZCvqFW5f8w2dn9x",
+  "tags": []
+}

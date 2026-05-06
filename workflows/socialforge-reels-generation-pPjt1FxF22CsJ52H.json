@@ -1,0 +1,888 @@
+{
+  "name": "SocialForge_Reels_Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "2fb08b09-1f60-4025-add2-ca4ce5d58011",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        16
+      ],
+      "notes": "Déclenche tous les jours à 7h (heure Martinique)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{$env.GOOGLE_SHEET_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Calendrier",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "98c18637-befe-4abe-9de8-f72fba8ed39c",
+      "name": "Lire Calendrier Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        32,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-date",
+              "leftValue": "={{ $json.Date }}",
+              "rightValue": "={{ $today.format('YYYY-MM-DD') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "condition-status",
+              "leftValue": "={{ $json.Statut }}",
+              "rightValue": "Programmé Reel",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c48fbd9f-fc74-49d0-b35d-e3c8cdc0a3ce",
+      "name": "Filter: Reel du jour",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        224,
+        16
+      ],
+      "notes": "Ne garde que les Reels programmés pour aujourd'hui"
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20240620",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "id": "12f24d61-efab-4878-a034-2b1d23cf9ac6",
+      "name": "Claude API - Générer Script",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [
+        432,
+        16
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "2vs0Sx3yFjNxARMc",
+          "name": "Anthropic account"
+        }
+      },
+      "notes": "Génère le script vidéo optimisé"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$credentials.apiKey}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-3-5-haiku-20241022"
+            },
+            {
+              "name": "max_tokens",
+              "value": 500
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Tu es expert en Feng Shui pour AJNA972 (Martinique).\\n\\nContexte: Le post original est : \\\"{{ $('Lire Calendrier Google Sheets').item.json.Texte }}\\\"\\n\\nTâche: Crée un script vidéo de 10-12 secondes max pour un Reel Instagram.\\n\\nStructure OBLIGATOIRE:\\n- HOOK (2s): Question percutante ou stat choc [max 6 mots]\\n- CONSEIL (6s): Astuce Feng Shui concrète [max 15 mots]\\n- CTA (2s): Appel à l'action [max 8 mots]\\n\\nTon: Apaisant, expert, accessible\\nPublic: Particuliers Martinique stressés\\nContraintes:\\n- Pas de termes techniques complexes\\n- Langage simple et chaleureux\\n- Ancrage local si possible\\n\\nFormat de sortie JSON UNIQUEMENT (pas de markdown, pas d'explication):\\n{\\n  \\\"hook\\\": \\\"...\\\",\\n  \\\"conseil\\\": \\\"...\\\",\\n  \\\"cta\\\": \\\"Formations sur ajna972.fr\\\",\\n  \\\"mots_cles_pexels\\\": \\\"zen meditation nature\\\"\\n}\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "216c3d66-5476-4907-b5e8-fa8055fd61f2",
+      "name": "HTTP Request - Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        -160
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "2vs0Sx3yFjNxARMc",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse la réponse Claude\nconst claudeResponse = $input.item.json.content[0].text;\nconst script = JSON.parse(claudeResponse);\n\n// Retourne les données structurées\nreturn {\n  hook: script.hook,\n  conseil: script.conseil,\n  cta: script.cta,\n  mots_cles_pexels: script.mots_cles_pexels,\n  texte_original: $('Lire Calendrier Google Sheets').item.json.Texte,\n  date_publication: $('Lire Calendrier Google Sheets').item.json.Date,\n  row_id: $('Lire Calendrier Google Sheets').item.json.__rowNum\n};"
+      },
+      "id": "8a835eaa-3873-4b9c-ba33-cc6b3965e0fc",
+      "name": "Parse Script JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        16
+      ],
+      "notes": "Extrait les données du script"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.pexels.com/videos/search?query={{ $json.mots_cles_pexels }}&orientation=portrait&per_page=10",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "pexelsApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fc5d70a9-139e-498c-9e03-920ed2ffa046",
+      "name": "Pexels API - Récupérer Vidéo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        16
+      ],
+      "notes": "Récupère une vidéo zen de fond"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sélectionne une vidéo aléatoire parmi les résultats\nconst videos = $input.item.json.videos;\nconst randomIndex = Math.floor(Math.random() * Math.min(5, videos.length));\nconst selectedVideo = videos[randomIndex];\n\n// Trouve la meilleure qualité en portrait (1080x1920)\nconst portraitFile = selectedVideo.video_files.find(f => \n  f.width === 1080 && f.height === 1920\n) || selectedVideo.video_files.find(f => \n  f.width < f.height // Fallback: n'importe quel format portrait\n) || selectedVideo.video_files[0]; // Dernier recours: première vidéo\n\nreturn {\n  ...($input.item.json),\n  video_url: portraitFile.link,\n  video_duration: selectedVideo.duration,\n  video_id: selectedVideo.id\n};"
+      },
+      "id": "5d5ad954-39d7-479c-bd7f-9b3f5b668716",
+      "name": "Sélectionner Vidéo Aléatoire",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/v1/render",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shotstackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$credentials.apiKey}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "dbb75c85-2305-4053-ad2a-a8267d1f92cf",
+      "name": "Shotstack - Créer Vidéo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1232,
+        16
+      ],
+      "notes": "Assemble la vidéo finale"
+    },
+    {
+      "parameters": {},
+      "id": "475da00b-b332-4ce7-b07f-b37696330d19",
+      "name": "Wait 5 secondes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1424,
+        16
+      ],
+      "webhookId": "wait-render",
+      "notes": "Laisse le temps à Shotstack de commencer le rendu"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.shotstack.io/v1/render/{{ $('Shotstack - Créer Vidéo').item.json.response.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "shotstackApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$credentials.apiKey}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "1fcd5a56-75c4-4bb0-86d4-9d085a147028",
+      "name": "Shotstack - Vérifier Statut",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1632,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "status-done",
+              "leftValue": "={{ $json.response.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "eba9f982-3e3c-4661-8599-9b97177b51fd",
+      "name": "IF Vidéo Prête",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "d952ba7f-ca59-4e4d-8c30-8bd00936dbae",
+      "name": "Wait 10s et Réessayer",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        208
+      ],
+      "webhookId": "wait-retry-render",
+      "notes": "Si pas prête, attendre et revérifier"
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "=🎬 **Nouveau Reel AJNA972 prêt !**\n\n📝 **Hook:** {{ $('Parse Script JSON').item.json.hook }}\n💡 **Conseil:** {{ $('Parse Script JSON').item.json.conseil }}\n🔗 **CTA:** {{ $('Parse Script JSON').item.json.cta }}\n\n📅 **Publication prévue:** {{ $('Parse Script JSON').item.json.date_publication }}\n🎥 **Vidéo:** {{ $json.response.url }}\n\n👇 **Actions disponibles:**",
+        "replyMarkup": "inlineKeyboard",
+        "additionalFields": {}
+      },
+      "id": "5d2d61ed-df51-4741-a66e-a4ea9d03b5d4",
+      "name": "Telegram - Envoyer Validation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2032,
+        16
+      ],
+      "webhookId": "2e37f373-437d-4f7b-a5ce-677b6538ca66",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      },
+      "notes": "Envoie le Reel pour validation"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "id": "2041929c-f3df-49ed-bd26-e380ede45fa3",
+      "name": "Telegram Trigger - Réponse Validation",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -176,
+        224
+      ],
+      "webhookId": "telegram-callback-reel",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrait l'action et l'ID de ligne\nconst callbackData = $input.item.json.callback_query.data;\nconst [action, rowId] = callbackData.split('_');\n\nreturn {\n  action: action,\n  row_id: parseInt(rowId),\n  chat_id: $input.item.json.callback_query.message.chat.id,\n  message_id: $input.item.json.callback_query.message.message_id\n};"
+      },
+      "id": "edfde126-cff8-4c31-97f1-5669ac47f1b1",
+      "name": "Parse Callback Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "action-publier",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "publier",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b16e2d66-7ee0-4e91-92ef-aa6a4cd6e23a",
+      "name": "IF Action = Publier",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        224,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$env.GOOGLE_SHEET_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Calendrier",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Statut": "Reel Publié",
+            "IG_Post_ID": "={{ $('Instagram - Publier Story').item.json.id }}",
+            "FB_Post_ID": "={{ $('Facebook - Publier Story').item.json.id }}"
+          }
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      },
+      "id": "1c096e2f-7520-45c4-a583-a286ef6f30a0",
+      "name": "Google Sheets - Update Statut Publié",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Parse Callback Data').item.json.chat_id }}",
+        "text": "=✅ **Reel publié avec succès !**\n\n📸 Instagram Story ID: {{ $('Instagram - Publier Story').item.json.id }}\n📘 Facebook Story ID: {{ $('Facebook - Publier Story').item.json.id }}\n\n✨ Le statut a été mis à jour dans le calendrier.",
+        "additionalFields": {}
+      },
+      "id": "8510c026-43b1-4394-b438-70ab0f840c9b",
+      "name": "Telegram - Confirmer Publication",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        224
+      ],
+      "webhookId": "859e62f8-79a1-4841-86b8-e7a956c23895",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$env.GOOGLE_SHEET_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Calendrier",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Statut": "Rejeté"
+          }
+        },
+        "options": {}
+      },
+      "id": "03db9cbb-238f-49f5-a34e-a71b1ec9f567",
+      "name": "Google Sheets - Update Rejeté",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $('Shotstack - Vérifier Statut').item.json.response.url }}"
+            },
+            {
+              "name": "media_type",
+              "value": "STORIES"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FACEBOOK_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fa00fade-ac41-4d41-8379-0e519247b7fc",
+      "name": "Instagram - Créer Container Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        224
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e012d8ee-e9a6-415f-a8f4-a231b6b13c5d",
+      "name": "Wait Container Ready",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        224
+      ],
+      "webhookId": "wait-ig-container"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Instagram - Créer Container Story').item.json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FACEBOOK_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0de239e7-b36d-454c-af89-6f642efe2b44",
+      "name": "Instagram - Publier Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FACEBOOK_PAGE_ID }}/video_stories",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_url",
+              "value": "={{ $('Shotstack - Vérifier Statut').item.json.response.url }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{$env.FACEBOOK_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cb8135ea-156c-44a2-88bf-0cc93372bdd8",
+      "name": "Facebook - Publier Story",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        336
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Lire Calendrier Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire Calendrier Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Filter: Reel du jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Reel du jour": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Script JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Script JSON": {
+      "main": [
+        [
+          {
+            "node": "Pexels API - Récupérer Vidéo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pexels API - Récupérer Vidéo": {
+      "main": [
+        [
+          {
+            "node": "Sélectionner Vidéo Aléatoire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sélectionner Vidéo Aléatoire": {
+      "main": [
+        [
+          {
+            "node": "Shotstack - Créer Vidéo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shotstack - Créer Vidéo": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 secondes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 secondes": {
+      "main": [
+        [
+          {
+            "node": "Shotstack - Vérifier Statut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shotstack - Vérifier Statut": {
+      "main": [
+        [
+          {
+            "node": "IF Vidéo Prête",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Vidéo Prête": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Envoyer Validation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 10s et Réessayer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 10s et Réessayer": {
+      "main": [
+        [
+          {
+            "node": "Shotstack - Vérifier Statut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger - Réponse Validation": {
+      "main": [
+        [
+          {
+            "node": "Parse Callback Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Callback Data": {
+      "main": [
+        [
+          {
+            "node": "IF Action = Publier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Action = Publier": {
+      "main": [
+        [
+          {
+            "node": "Instagram - Créer Container Story",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets - Update Rejeté",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Créer Container Story": {
+      "main": [
+        [
+          {
+            "node": "Wait Container Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Container Ready": {
+      "main": [
+        [
+          {
+            "node": "Instagram - Publier Story",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook - Publier Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram - Publier Story": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Update Statut Publié",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook - Publier Story": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Update Statut Publié",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Update Statut Publié": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Confirmer Publication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "5fcb2ccc-beb1-4035-8db1-0d195bdfa72b",
+  "meta": null,
+  "id": "pPjt1FxF22CsJ52H",
+  "tags": []
+}

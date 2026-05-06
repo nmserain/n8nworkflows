@@ -1,0 +1,283 @@
+{
+  "name": "Photo Mac address to CSV - need rework",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        256
+      ],
+      "id": "e5951527-53d7-4282-9e43-72e38a4196cc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "The Agent can call this tool on its own output. If invalid, it regenerates.",
+        "jsCode": "function validateCSV(csvText) {\n  const lines = csvText.trim().split('\\n');\n  const expectedCols = 54;\n  for (let i = 0; i < lines.length; i++) {\n    const cols = lines[i].split(',');\n    if (cols.length !== expectedCols) {\n      return { valid: false, row: i+1, cols: cols.length };\n    }\n  }\n  return { valid: true, rows: lines.length };\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        256
+      ],
+      "id": "fae71807-f754-4e11-8d06-2677ac6b7cb1",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Mission: Create a valid 3CX import CSV\n\n## Data Available:\n- MAC phones (JSON array):\n\n- DTX users (JSON array):\n\n- Example CSV format:\n\n## Rules:\n- CSV must have exactly 54 columns, matching the headers in the example.\n- Each row = one DTX user.\n- Assign phones to users:\n  - DTX model \"T54\" → SIP-T54W phone (unique MAC).\n  - DTX model \"T57\" → SIP-T57W phone (unique MAC).\n  - DTX model \"T34\" → SIP-T34W phone (unique MAC).\n- No MAC can be used twice.\n- Default values: (fill with example if missing)\n  - Role = `<role name=\"users\" />`\n  - Department = `DEFAULT`\n  - VMEnable = `1`\n  - VMPIN = random 6-digit number\n  - etc. (follow example CSV)\n\n## Output Requirements:\n- Only return raw CSV text (no markdown, no explanations).\n- Each row must contain exactly 54 values.\n- If data is missing, insert an empty string \"\" to preserve 54 columns.\n",
+        "options": {
+          "systemMessage": "You are an expert in 3CX phone system configuration.\nYour task is to generate a perfectly valid 3CX import CSV file.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        32
+      ],
+      "id": "79a8fd30-aff8-4221-a144-8428f4ef2aac",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        32
+      ],
+      "id": "1e00b549-f7c8-495b-92fb-abb29880e199",
+      "name": "✅ Success"
+    },
+    {
+      "parameters": {
+        "options": {
+          "delimiter": ",",
+          "fileName": "={{ $json.filename }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        32
+      ],
+      "id": "a80c3ae2-06e1-4eef-b3f9-4c3dd7f20eff",
+      "name": "💾 Save Final CSV"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse OCR JSON results\nconst output = [];\nfor (const item of items) {\n  try {\n    const parsed = JSON.parse(item.json.content);\n    const rows = Array.isArray(parsed) ? parsed : [parsed];\n\n    for (const row of rows) {\n      output.push({ json: row });\n    }\n  } catch (e) {\n    output.push({ json: { error: e.message, raw: item.json.content } });\n  }\n}\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        32
+      ],
+      "id": "e6971b5e-8acb-417f-af64-5f0f7e879c00",
+      "name": "📊 Parse OCR"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list"
+        },
+        "text": "Extract the following information from this photo:\n- The phone model (e.g. \"SIP-T34W\", \"SIP-T54W\")\n- All Serial Numbers (SN)\n- All MAC addresses\n\nReturn the result as a pure JSON array of objects.\n⚠️ Do not add any text, comments, explanations, or markdown formatting.\n⚠️ Only return valid JSON.\n\nExample format:\n[\n  {\n    \"filename\": \"{{ $json.name }}\",\n    \"model\": \"SIP-T34W\",\n    \"serial\": \"201037G090016613\",\n    \"mac\": \"44DBD27E72B7\"\n  }\n]",
+        "inputType": "base64",
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        304,
+        32
+      ],
+      "id": "a0e9a5d0-50cb-4bcc-b80d-de07a7731fbc",
+      "name": "🔍 OCR Analysis",
+      "credentials": {
+        "openAiApi": {
+          "id": "uVRUCtuJ9tL0nrKZ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        80,
+        32
+      ],
+      "id": "f7d24a23-e47c-4ec2-9c53-1a91feca8943",
+      "name": "⬇️ Download Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1wShjd64G8jEsg3PWV_nSeF9x4lE48ud_",
+            "mode": "list",
+            "cachedResultName": "Photos MAC SN"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -144,
+        32
+      ],
+      "id": "1f75d723-c0d8-4c4e-a39a-83cf2de69c7a",
+      "name": "📁 Get Photos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "💾 Save Final CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Save Final CSV": {
+      "main": [
+        [
+          {
+            "node": "✅ Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Parse OCR": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 OCR Analysis": {
+      "main": [
+        [
+          {
+            "node": "📊 Parse OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download Photos": {
+      "main": [
+        [
+          {
+            "node": "🔍 OCR Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📁 Get Photos": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download Photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "58d53dcf-8452-40fa-8726-2e1625379f97",
+  "meta": null,
+  "id": "N3NTsxBkdIvXlKN6",
+  "tags": []
+}

@@ -1,0 +1,468 @@
+{
+  "name": "SocialForge_Sync_GDrive_to_Airtable",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sync-images",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e3483fc0-62e1-4df5-9e29-8678fa450c7f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        848
+      ],
+      "webhookId": "sync-gdrive-airtable"
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger-node",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "month",
+              "name": "month",
+              "value": "={{ $json.month || $json.body?.month || new Date().toISOString().substring(0, 7) }}",
+              "type": "string"
+            },
+            {
+              "id": "client-id",
+              "name": "client_id",
+              "value": "={{ $json.client_id || $json.body?.client_id || 'AJNA972' }}",
+              "type": "string"
+            },
+            {
+              "id": "client-folder-id",
+              "name": "client_folder_id",
+              "value": "={{ $json.client_folder_id || $json.body?.client_folder_id }}",
+              "type": "string"
+            },
+            {
+              "id": "table-name",
+              "name": "table_name",
+              "value": "={{ 'Contenus_SocialForge_' + ($json.client_id || $json.body?.client_id || 'AJNA972') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9bb2a879-50f5-46ba-badb-9f0247568f69",
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        272,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search"
+      },
+      "id": "ae9ce6a2-d46b-4bbb-b631-c2194302ac99",
+      "name": "Find Month Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        496,
+        944
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      },
+      "notes": "Cherche le dossier mensuel (2026-01) dans le dossier client"
+    },
+    {
+      "parameters": {
+        "operation": "list"
+      },
+      "id": "f10f1362-8679-4e4b-83ff-1288c25afb50",
+      "name": "List Images in Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        720,
+        944
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "file-id",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "file-name",
+              "name": "file_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "post-date",
+              "name": "post_date",
+              "value": "={{ $json.name.match(/post_(\\d{4}_\\d{2}_\\d{2})/)?.[1]?.replace(/_/g, '-') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5ea7b7c-5271-4fca-8737-6084a921a982",
+      "name": "Extract File Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        928,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "preBuiltAgentsCalloutGoogleDrive": "",
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.file_id }}"
+        },
+        "permissionsUi": {},
+        "options": {}
+      },
+      "id": "90879cdd-f4cf-4dfd-8c5b-2951733dedc0",
+      "name": "Share File (Make Public)",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1152,
+        944
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "public-url",
+              "name": "public_url",
+              "value": "=https://drive.google.com/uc?export=view&id={{ $('Extract File Metadata').item.json.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "thumbnail-url",
+              "name": "thumbnail_url",
+              "value": "=https://drive.google.com/thumbnail?id={{ $('Extract File Metadata').item.json.file_id }}&sz=w1000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7f2ca7a8-bc5e-4ea5-8188-0b6d1303c1ab",
+      "name": "Generate Public URLs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1376,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appNqRBhs8m8PWjzP",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Set Parameters').first().json.table_name }}",
+          "mode": "name"
+        },
+        "filterByFormula": "=DATETIME_FORMAT({Date_Publication}, 'YYYY-MM-DD')='{{ $('Extract File Metadata').item.json.post_date }}'",
+        "options": {}
+      },
+      "id": "2f87a646-d12f-4c96-b20c-719f4acf85c4",
+      "name": "Find Matching Airtable Record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        944
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "airtable-token",
+          "name": "Airtable Personal Access Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appNqRBhs8m8PWjzP",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ $('Set Parameters').first().json.table_name }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Media_URL": "={{ $('Generate Public URLs').item.json.public_url }}",
+            "Image": "=[{\"url\": \"{{ $('Generate Public URLs').item.json.public_url }}\"}]"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "665a6697-ae8d-4dff-9a0b-509bd3a5ae42",
+      "name": "Update Airtable with Image URL",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        944
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "airtable-token",
+          "name": "Airtable Personal Access Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"updated_records\": $items().length, \"month\": $('Set Parameters').first().json.month, \"client_id\": $('Set Parameters').first().json.client_id } }}",
+        "options": {}
+      },
+      "id": "e1fee943-053a-4c21-9d4a-d51110a53269",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "month",
+              "name": "month",
+              "value": "=2026-01",
+              "type": "string"
+            },
+            {
+              "id": "client-id",
+              "name": "client_id",
+              "value": "=AJNA972",
+              "type": "string"
+            },
+            {
+              "id": "client-folder-id",
+              "name": "client_folder_id",
+              "value": "=16U5atywdcfpIHlt_ZPXvwW13fvQL4fyN",
+              "type": "string"
+            },
+            {
+              "id": "table-name",
+              "name": "table_name",
+              "value": "=AJNA972",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d366a77f-d081-4e8f-80f8-3b1dda21a529",
+      "name": "Set Parameters1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        272,
+        1104
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters": {
+      "main": [
+        [
+          {
+            "node": "Find Month Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Month Folder": {
+      "main": [
+        [
+          {
+            "node": "List Images in Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Images in Folder": {
+      "main": [
+        [
+          {
+            "node": "Extract File Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Metadata": {
+      "main": [
+        [
+          {
+            "node": "Share File (Make Public)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share File (Make Public)": {
+      "main": [
+        [
+          {
+            "node": "Generate Public URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Public URLs": {
+      "main": [
+        [
+          {
+            "node": "Find Matching Airtable Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Matching Airtable Record": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable with Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Airtable with Image URL": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters1": {
+      "main": [
+        [
+          {
+            "node": "Find Month Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e3443ed8-91d7-48a0-bd55-c1f4d301907d",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "IxBKJ3xqRIgEam05",
+  "tags": []
+}
