@@ -1,0 +1,629 @@
+{
+  "name": "DTX Import",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3456,
+        2112
+      ],
+      "id": "746365d5-bef0-4e08-b293-c28ff7ef6d6c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "includeEmptyCells": true,
+          "sheetName": "DT Recap"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        2208
+      ],
+      "id": "fc6f5137-a0fe-4b8b-8c1a-9c46f9dbcd49",
+      "name": "Extract dtx",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        2208
+      ],
+      "id": "14a2e106-d1e5-4177-869e-7158e570fb29",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "limit": 1,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1svPiSEnDh_FclOa8prgZciYDiROMg0hP",
+            "mode": "list",
+            "cachedResultName": "dtx to ymcs ",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1svPiSEnDh_FclOa8prgZciYDiROMg0hP"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3232,
+        2112
+      ],
+      "id": "812f7927-63ce-4847-b326-4c83cb89bf93",
+      "name": "📋 Get DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -3008,
+        2112
+      ],
+      "id": "067a9b7b-b890-4dcf-bb74-8546280b0b6a",
+      "name": "⬇️ Download DTX",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "vxCK0uTATXT8s8z2",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "ymcs_data",
+        "options": {
+          "compression": true,
+          "fileName": "={{ $('YMCS XLSX').item.json.TEMP_FILENAME }}",
+          "headerRow": true,
+          "sheetName": "devices_template"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1888,
+        2112
+      ],
+      "id": "a06dd76a-7d9f-4934-9b61-f7833ca5d9e9",
+      "name": "Convert File & Download"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c3e0bfb4-f260-48bb-87d3-118d49ad26da",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3008,
+        2304
+      ],
+      "id": "687161d3-a4d6-46de-ab58-a6b577844b0e",
+      "name": "Webhook",
+      "webhookId": "c3e0bfb4-f260-48bb-87d3-118d49ad26da"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1216,
+        2016
+      ],
+      "id": "4fab52ea-43d9-4a1e-8593-3616851bc9ad",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1664,
+        2208
+      ],
+      "id": "7671e34f-e305-4d09-920e-3f45afd1f2d5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Wvtp5SjEVchclKdY",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Wvtp5SjEVchclKdY",
+          "cachedResultName": "Telegram Notification Service"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -768,
+        2016
+      ],
+      "id": "03c9b73b-f138-4f50-ba7e-85aa7b0dd9f2",
+      "name": "Call 'Telegram Notification Service'1"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "3cx_data",
+        "options": {
+          "fileName": "={{ $('3CX CSV').item.json.TEMP_FILENAME }}",
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1888,
+        2304
+      ],
+      "id": "9864d4f9-171b-4913-98c7-c09b85fb3bc2",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowName = $workflow.name;\nconst startTime = new Date($execution.startedAt).getTime();\nconst endTime = Date.now();\nconst executionTime = ((endTime - startTime) / 1000).toFixed(2);\n\nreturn [{\n  json: {\n    notificationType: 'success',\n    workflowName: workflowName,\n    status: 'success',\n    message: 'Workflow terminé avec succès',\n    executionTime: executionTime,\n    chatId: '5992469226'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        2016
+      ],
+      "id": "34f0a110-1f89-413e-967e-194efa9fecc6",
+      "name": "Parse CSV"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -768,
+        2208
+      ],
+      "id": "e1d5e5e4-739e-4f1c-909c-79fbe33c93f1",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": " const items = $input.all();\n  const timestamp = new Date().toISOString();\n  const workflowInfo = {\n    workflowName: $workflow.name,\n    executionId: $execution.id,\n    timestamp\n  };\n\n  // 1. Gestion des erreurs d'exécution n8n\n  const errorItem = items.find(item => item.json.error !== undefined || item.error !== undefined);\n  if (errorItem) {\n    const error = errorItem.json.error || errorItem.error;\n    return [{\n      json: {\n        hasError: true,\n        success: false,\n        errorType: 'EXECUTION_ERROR',\n        message: error.message || 'Une erreur technique est survenue dans le flux',\n        ...workflowInfo\n      }\n    }];\n  }\n\n  // 2. Extraction et validation des fichiers binaires\n  let xlsxFile = null;\n  let csvFile = null;\n\n  // On parcourt tous les items pour trouver les propriétés binaires\n  for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {\n    const item = items[itemIndex];\n    if (item.binary) {\n      for (const key of Object.keys(item.binary)) {\n        const binary = item.binary[key];\n\n        // Vérification si le fichier n'est pas vide\n        if (binary.fileSize <= 8) continue;\n\n        // Récupérer le contenu réel du fichier et le convertir en base64\n        const buffer = await this.helpers.getBinaryDataBuffer(itemIndex, key);\n        const base64Data = buffer.toString('base64');\n\n        const fileInfo = {\n          filename: binary.fileName,\n          fileSize: binary.fileSize,\n          mimeType: binary.mimeType,\n          data: base64Data  // Contenu base64 réel\n        };\n\n        if (binary.fileExtension === 'xlsx') {\n          xlsxFile = fileInfo;\n        } else if (binary.fileExtension === 'csv') {\n          csvFile = fileInfo;\n        }\n      }\n    }\n  }\n\n  // 3. Validation de la présence des deux fichiers\n  if (!xlsxFile || !csvFile) {\n    let missingMsg = [];\n    if (!csvFile) missingMsg.push(\"CSV 3CX\");\n    if (!xlsxFile) missingMsg.push(\"XLSX YMCS\");\n\n    return [{\n      json: {\n        hasError: true,\n        success: false,\n        errorType: 'MISSING_FILES_ERROR',\n        message: `Fichiers manquants ou invalides : ${missingMsg.join(' et ')}`,\n        details: {\n          csvFound: !!csvFile,\n          xlsxFound: !!xlsxFile\n        },\n        ...workflowInfo\n      }\n    }];\n  }\n\n  // 4. Succès\n  console.log('✅ Fichiers validés : 3CX CSV et YMCS XLSX prêts.');\n\n  return [{\n    json: {\n      hasError: false,\n      success: true,\n      message: \"Validation réussie\",\n      files: {\n        csv_3cx: csvFile,\n        xlsx_ymcs: xlsxFile\n      },\n      ...workflowInfo\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        2208
+      ],
+      "id": "5774832c-e652-44d9-85c3-b37f59c20814",
+      "name": "Check for errors",
+      "continueOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// ERROR RESPONSE TO WEBHOOK\n// Formate la réponse d'erreur pour le webhook\n// ============================================\n\nconst errorData = $input.first().json;\n\nreturn [{\n  json: {\n    success: false,\n    error: true,\n    errorType: errorData.errorType,\n    message: errorData.message,\n    timestamp: errorData.timestamp,\n    files: {\n      csv_3cx: null,\n      xlsx_ymcs: null\n    }\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        2304
+      ],
+      "id": "77d3583c-dd3d-43fb-bfbb-6bcbf2ad04e3",
+      "name": "Error response to webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n  // PREPARE TELEGRAM ERROR NOTIFICATION\n  // Formate le message d'erreur pour Telegram\n  // ============================================\n\n  const errorData = $input.first().json;\n\n  // Build detailed error message for Telegram\n  let telegramMessage = `❌ *ERREUR WORKFLOW*\\n\\n`;\n  telegramMessage += `📋 Workflow: *${errorData.workflowName || 'DTX Import'}*\\n`;\n  telegramMessage += `🔗 ID: \\`${errorData.workflowId || 'unknown'}\\`\\n`;\n  telegramMessage += `📍 Node: *${errorData.failedNode || 'Unknown'}*\\n`;\n  telegramMessage += `🔄 Mode: ${errorData.executionMode || 'unknown'}\\n`;\n  telegramMessage += `\\n🔴 *Message d'erreur:*\\n\\`\\`\\`\\n${errorData.message}\\n\\`\\`\\``;\n  telegramMessage += `\\n\\n🆔 Execution ID: \\`${errorData.executionId || 'unknown'}\\``;\n  telegramMessage += `\\n🕐 ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;\n\n  return [{\n    json: {\n      message: telegramMessage,\n      chatId: '5992469226'\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        2304
+      ],
+      "id": "e3eff764-49e4-44f7-981a-cc4709be84a1",
+      "name": "Prepare Telergam error"
+    },
+    {
+      "parameters": {
+        "chatId": "{{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -768,
+        2400
+      ],
+      "id": "786acecb-8fbf-4a47-ba09-3234e03f4bc2",
+      "name": "Send a text message",
+      "webhookId": "17c0bd0b-2755-4184-9150-05b4c6b7584c",
+      "credentials": {
+        "telegramApi": {
+          "id": "tscHxihjX7g4rq1w",
+          "name": "Telegram Scriptator Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": []
+        },
+        "includeOtherFields": true,
+        "include": "except",
+        "excludeFields": "TEMP_FILENAME",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2112,
+        2304
+      ],
+      "id": "44c16e12-4867-4e58-a0bd-a456a5b4762b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": []
+        },
+        "includeOtherFields": true,
+        "include": "except",
+        "excludeFields": "TEMP_FILENAME",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2112,
+        2112
+      ],
+      "id": "b1df39c0-be7c-40a7-abe1-adba1bd433bf",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawData = $input.all()[0].json.data;\n\n// 1. EXTRACTION DU NOM DU CLIENT\nconst clientRow = rawData.find(row => row[\"DT\"] === \"Nom client \");\nconst clientName = clientRow ? (clientRow[\"DTM50056\"] || \"\").trim().replace(/\\s+/g, '_') : \"Client\";\nconst finalFileName = `3cx_import_${clientName}.csv`;\n\n// 2. FILTRER LES UTILISATEURS VALIDES\nconst users = rawData.filter(row => {\n    const extValue = row[\"__EMPTY_1\"];\n    return extValue && !isNaN(extValue) && extValue !== \"Extension\";\n});\n\n// 3. ANNUAIRE POUR LES BLF\nconst directory = users.map(u => ({\n    number: u[\"__EMPTY_1\"].toString(),\n    name: `${u[\"DT\"] || \"\"} ${u[\"DTM50056\"] || \"\"}`.trim()\n}));\n\n// 4. SET POUR LE CONTROLE DES DOUBLONS D'EMAIL ET DID\nconst seenEmails = new Set();\nconst seenDIDs = new Set();\n\n// 5. TRANSFORMATION\nreturn users.map(row => {\n    const currentExt = row[\"__EMPTY_1\"].toString();\n    const excelModel = (row[\"__EMPTY_4\"] || \"\").toUpperCase().trim();\n    \n    // --- GESTION DES DOUBLONS D'EMAIL ---\n    let email = (row[\"__EMPTY_7\"] || \"\").replace(/\\s/g, '').replace(/@$/, '');\n    if (seenEmails.has(email.toLowerCase())) {\n        email = \"\";\n    } else if (email !== \"\") {\n        seenEmails.add(email.toLowerCase());\n    }\n\n    // --- LOGIQUE WEBMEETING FRIENDLY NAME ---\n    const baseName = (row[\"DT\"] || row[\"DTM50056\"] || \"User\").replace(/[^a-zA-Z0-9]/g, '');\n    const extSuffix = currentExt.slice(-3); \n    const friendlyName = baseName.substring(0, 7).toLowerCase() + extSuffix;\n\n    // --- LOGIQUE DID (SDA / Appels entrants) ---\n    let didValue = (row[\"__EMPTY_2\"] || \"\").toString().trim();\n    if (didValue.length === 9 && didValue.startsWith(\"596\")) {\n        // 596123456 -> 596596123456\n        didValue = \"596\" + didValue;\n    } else if (didValue.length === 10 && didValue.startsWith(\"0596\")) {\n        // 0596123456 -> 596596123456\n        didValue = \"596\" + didValue.substring(1);\n    }\n    // Gestion des doublons de DID\n    if (didValue !== \"\" && seenDIDs.has(didValue)) {\n        didValue = \"\";\n    } else if (didValue !== \"\") {\n        seenDIDs.add(didValue);\n    }\n\n    // --- LOGIQUE OutboundCallerID (Affichage appels sortants) ---\n    let outboundCallerID = (row[\"__EMPTY_3\"] || \"\").toString().trim();\n    if (outboundCallerID.length === 9 && outboundCallerID.startsWith(\"596\")) {\n        // 596123456 -> 0596123456\n        outboundCallerID = \"0\" + outboundCallerID;\n    }\n\n    // --- LOGIQUE MODÈLES, MAC ET ROUTEUR ---\n    let model3CX = \"\";\n    let template3CX = \"\";\n    let macAddress = \"\";\n    let routerValue = \"\";\n\n    const dectModels = [\"W56H\", \"W74H\", \"W59R\"];\n    const isDect = dectModels.some(m => excelModel.includes(m));\n\n    if (!isDect) {\n        template3CX = \"yealinkT4x.ph.xml\";\n        macAddress = (row[\"À compléter : par Dauphin Télécom\"] || \"\").replace(/[:.-]/g, '');\n        routerValue = (row[\"__EMPTY_9\"] || \"\").trim();\n        \n        if (excelModel.includes(\"T34\")) {\n            model3CX = \"Yealink T34W\";\n        } else if (excelModel.includes(\"T57\")) {\n            model3CX = \"Yealink T57W\";\n        } else {\n            model3CX = \"Yealink T54W\";\n        }\n    }\n\n    // --- XML CONFIGURATIONS ---\n    const otherUsers = directory.filter(u => u.number !== currentExt);\n    let blfXml = '<PhoneDevice><BLFS>';\n    otherUsers.slice(0, 15).forEach((user, index) => {\n        blfXml += `<BLF BLFNo=\"${index + 1}\" BLFType=\"BLF\" BLFTypeID=\"0\" ID=\"${user.number}\">${user.name}</BLF>`;\n    });\n    blfXml += '</BLFS></PhoneDevice>';\n\n    const phoneSettingsXml = `<PhoneDevice ProvType=\"0\" Secret=\"\" PhoneLanguage=\"French\" XferType=\"BXfer\" RingTone=\"Ring 1\" QueueRingTone=\"Ring 6\" DateFormat=\"DD MMM YYYY (15 Jan 2017)\" TimeFormat=\"24-hour clock\" PowerLed=\"Both (Voicemail and Missed calls)\" Backlight=\"15 seconds\" ScreenSaver=\"15 seconds\"><CustomQueueRingTones /><mcgroups enabled=\"false\" /><DynamicOptions><option name=\"vlanwanport\" value=\"False\" /><option name=\"vlanwanid\" value=\"1\" /><option name=\"vlanwanpriority\" value=\"0\" /><option name=\"vlanpcport\" value=\"False\" /><option name=\"vlanpcid\" value=\"1\" /><option name=\"vlanpcpriority\" value=\"0\" /></DynamicOptions><LldpOptions><option name=\"lldpvalue\" value=\"True\" /></LldpOptions><CodecsPriority><Codec Priority=\"1\" PriorityVarName=\"codec1\" DisplayText=\"G722\" PayloadTypeName=\"payload3\" payload=\"G722\">9</Codec><Codec Priority=\"2\" PriorityVarName=\"codec2\" DisplayText=\"PCMA\" PayloadTypeName=\"payload2\" payload=\"PCMA\">8</Codec><Codec Priority=\"3\" PriorityVarName=\"codec3\" DisplayText=\"PCMU\" PayloadTypeName=\"payload1\" payload=\"PCMU\">0</Codec><Codec Priority=\"4\" PriorityVarName=\"codec4\" DisplayText=\"G729\" PayloadTypeName=\"payload4\" payload=\"G729\">18</Codec></CodecsPriority></PhoneDevice>`;\n\n    return {\n        json: {\n            \"TEMP_FILENAME\": finalFileName,\n            \"Number\": currentExt,\n            \"FirstName\": row[\"DTM50056\"] || \"\",\n            \"LastName\": row[\"DT\"] || \"\",\n            \"EmailAddress\": email,\n            \"MobileNumber\": \"\",\n            \"OutboundCallerID\": outboundCallerID,\n            \"DID\": didValue,\n            \"Role\": '<role name=\"users\" />',\n            \"Department\": row[\"__EMPTY\"] || \"DEFAULT\",\n            \"ClickToCallAuth\": \"0\",\n            \"WMApprove\": \"0\",\n            \"WebMeetingFriendlyName\": friendlyName,\n            \"MAC\": macAddress,\n            \"Template\": template3CX,\n            \"Model\": model3CX,\n            \"Router\": routerValue,\n            \"Language\": \"French\",\n            \"Ringtone\": \"Ring 1\",\n            \"QRingtone\": \"Ring 6\",\n            \"VMEnable\": \"1\",\n            \"VMLanguage\": \"0D767FEA-10A3-4ba4-8A57-FE74BDABE4E5\",\n            \"VMPlayMsgDateTime\": \"0\",\n            \"VMPIN\": \"\",\n            \"VMEmailOptions\": \"0\",\n            \"VMNoPin\": \"1\",\n            \"VMPlayCallerID\": \"0\",\n            \"RecordCalls\": \"0\",\n            \"RecordExternal\": \"0\",\n            \"RecordCanSee\": \"0\",\n            \"RecordCanDelete\": \"0\",\n            \"RecordStartStop\": \"0\",\n            \"RecordNotify\": \"0\",\n            \"Disabled\": \"0\",\n            \"HideFWrules\": \"0\",\n            \"DisableExternalCalls\": \"0\",\n            \"HideInPhonebook\": \"0\",\n            \"CallScreening\": \"0\",\n            \"PinProtected\": \"0\",\n            \"PinTimeout\": \"0\",\n            \"Transcription\": \"0\",\n            \"AllowLanOnly\": \"1\",\n            \"SIPID\": \"\",\n            \"DeliverAudio\": \"1\",\n            \"HotDesk\": \"0\",\n            \"SRTPMode\": \"0\",\n            \"EmailMissedCalls\": \"0\",\n            \"MS365SignInDisabled\": \"\",\n            \"MS365CalendarDisabled\": \"\",\n            \"MS365ContactsDisabled\": \"\",\n            \"MS365TeamsDisabled\": \"\",\n            \"GoogleSignInDisabled\": \"\",\n            \"GoogleContactsDisabled\": \"\",\n            \"GoogleCalendarDisabled\": \"\",\n            \"PhoneSettings\": phoneSettingsXml,\n            \"BLF\": blfXml\n        }\n    };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2336,
+        2304
+      ],
+      "id": "44437e01-351f-4d1a-9eea-5e4db9891341",
+      "name": "3CX CSV"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawData = $input.all()[0].json.data;\n\n// 1. EXTRACTION DES METADONNEES (Nom client et Site Code)\nconst clientRow = rawData.find(row => row[\"DT\"] === \"Nom client \");\nconst clientName = clientRow ? (clientRow[\"DTM50056\"] || \"\").trim().replace(/\\s+/g, '_') : \"Client\";\n// Génération du siteCode au format mtq-3cx-[nom-client]-1\nconst siteCode = `mtq-3cx-${clientName.toLowerCase()}-1`;\nconst finalFileName = `ymcs_import_${clientName}.xlsx`;\n\n// 2. FILTRER LES UTILISATEURS VALIDES (Extension >= 2000)\nconst validRows = rawData.filter(row => {\n    const ext = parseInt(row[\"__EMPTY_1\"]);\n    return !isNaN(ext) && ext >= 2000;\n});\n\n// 3. TRAITEMENT DES DONNEES ET REGROUPEMENT MAC (Spécial W56H)\nconst deviceMap = new Map();\n\nvalidRows.forEach(row => {\n    // Nettoyage MAC : suppression tirets, espaces, mise en majuscules\n    let mac = (row[\"À compléter : par Dauphin Télécom\"] || \"\").replace(/[:.-]/g, '').trim().toUpperCase();\n    const sn = (row[\"__EMPTY_8\"] || \"\").trim(); // S/N column\n    const extension = row[\"__EMPTY_1\"].toString();\n    const nom = (row[\"DT\"] || \"\").trim();\n    const prenom = (row[\"DTM50056\"] || \"\").trim();\n    let excelModel = (row[\"__EMPTY_4\"] || \"\").trim();\n\n    if (!mac) return; // On ignore les lignes sans MAC\n\n    // RÈGLE DE SUBSTITUTION / STANDARDISATION MODÈLE\n    let finalModel = excelModel;\n    if (excelModel === \"SIP-W70+W56H\") {\n        finalModel = \"W70B\";\n    } else if (excelModel === \"SIP-T54\" || excelModel === \"T54\") {\n        finalModel = \"SIP-T54W\";\n    } else if (excelModel === \"SIP-T34\" || excelModel === \"T34\") {\n        finalModel = \"SIP-T34W\";\n    } else if (excelModel === \"SIP-T57\" || excelModel === \"T57\") {\n        finalModel = \"SIP-T57W\";\n    } else if (/^T\\d+/.test(excelModel)) {\n        // Si commence par T sans SIP- (ex: T31P)\n        finalModel = `SIP-${excelModel}`;\n    }\n\n    // GESTION DU DEVICE NAME\n    let currentDisplayName = prenom ? `${nom} ${prenom}` : nom;\n    \n    // RÈGLE SPÉCIALE W56H (Regroupement par MAC)\n    if (finalModel.includes(\"W56H\") || finalModel.includes(\"W74H\") || finalModel.includes(\"W59R\")) {\n        if (deviceMap.has(mac)) {\n            // Si la MAC existe déjà, on ajoute l'extension au nom existant\n            const existing = deviceMap.get(mac);\n            existing.extensions.push(extension);\n            existing.DeviceName = `BASE - ${existing.extensions.join(' ')}`;\n        } else {\n            // Première occurrence du sans-fil\n            deviceMap.set(mac, {\n                MAC: mac,\n                MachineID: sn,\n                Model: finalModel,\n                DeviceName: `BASE - ${extension}`,\n                extensions: [extension], // Pour le suivi interne\n                Site: siteCode\n            });\n        }\n    } else {\n        // POSTE FIXE NORMAL (T5x, T3x, etc.)\n        const deviceName = `${extension} - ${currentDisplayName}`;\n        deviceMap.set(mac, {\n            MAC: mac,\n            MachineID: sn,\n            Model: finalModel,\n            DeviceName: deviceName,\n            Site: siteCode\n        });\n    }\n});\n\n// 4. FORMATAGE FINAL POUR YMCS\nconst devices = Array.from(deviceMap.values()).map(device => ({\n    \"MAC\": device.MAC,\n    \"Machine ID(Serial Number)\": device.MachineID,\n    \"Model\": device.Model,\n    \"Device Name\": device.DeviceName,\n    \"Site\": device.Site,\n    \"Unique URL\": \"\",\n    \"User Name\": \"\",\n    \"Password\": \"\",\n    \"Description\": \"\",\n    \"Account Type\": \"\",\n    \"Account Info\": \"\",\n    \"Account Line\": \"\",\n    // Métadonnée pour le nœud Spreadsheet File (ne sera pas dans le fichier si on filtre)\n    \"TEMP_FILENAME\": finalFileName \n}));\n\nreturn devices.map(d => ({ json: d }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2336,
+        2112
+      ],
+      "id": "b98120e3-cd8d-4b89-83d4-7fc0c79835f7",
+      "name": "YMCS XLSX"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "📋 Get DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract dtx": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "3CX CSV",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YMCS XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Get DTX": {
+      "main": [
+        [
+          {
+            "node": "⬇️ Download DTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⬇️ Download DTX": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract dtx",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert File & Download": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Check for errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Telegram Notification Service'1": {
+      "main": [
+        []
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Call 'Telegram Notification Service'1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for errors": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error response to webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error response to webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Telergam error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Telergam error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook1": {
+      "main": [
+        []
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3CX CSV": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YMCS XLSX": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Convert File & Download",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "25f30258-c65b-4c71-8764-88147e2773b9",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "ASuCRojKT2UkXOpa",
+  "tags": [
+    {
+      "updatedAt": "2025-09-03T14:07:52.287Z",
+      "createdAt": "2025-09-03T14:07:52.287Z",
+      "id": "LcPpxlqlWWESEENe",
+      "name": "3CX Import"
+    },
+    {
+      "updatedAt": "2025-09-03T14:49:42.560Z",
+      "createdAt": "2025-09-03T14:49:42.560Z",
+      "id": "laZOvtAOZQrv1Pfd",
+      "name": "Google Drive"
+    },
+    {
+      "updatedAt": "2025-09-03T14:07:52.791Z",
+      "createdAt": "2025-09-03T14:07:52.791Z",
+      "id": "m4n7QTlGpD5nJspr",
+      "name": "OpenAI"
+    }
+  ]
+}
